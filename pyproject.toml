@@ -1,0 +1,31 @@
+# pyproject.toml
+
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools>=61.0.0", "wheel"]
+
+[project]
+authors = [{name = "Artem Butusov", email = "art.sormy@gmail.com"}]
+classifiers = [
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+]
+description = "API and CLI for Ecosense RadonEye devices"
+dynamic = ["dependencies"]
+keywords = ["Ecosense", "RadonEye", "RD200", "RD200N", "RD200P"]
+license = {file = "LICENSE"}
+name = "radoneye"
+readme = "README.md"
+requires-python = ">=3.9"
+version = "1.0.0"
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[project.urls]
+Homepage = "https://github.com/sormy/radoneye"
+Issues = "https://github.com/sormy/radoneye/issues"
+
+[project.scripts]
+radoneye = "radoneye.__main__:main"
