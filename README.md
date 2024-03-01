@@ -4,9 +4,9 @@ Provides simple and convinient Python API to communicate with RadonEye bluetooth
 
 Supported devices:
 
-- RD200 (version 1) - not tested
-- RD200N (version 2) - tested
-- RD200P (version 2) - should work, never tested
+- RD200 (version 1) - ok (but no beep/history support, no counts/version in status)
+- RD200N (version 2) - ok (full support)
+- RD200P (version 2) - should work, not tested
 
 Version 1 support is implemented using publicly available information. I have no device to test on,
 if you have old RD200 device and are willing to help to build better support (beeps, history etc),
