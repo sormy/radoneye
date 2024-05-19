@@ -32,18 +32,19 @@ PYTHONPATH=src .venv/bin/python3 -m radoneye
 ## Publishing
 
 ```sh
+
 # install dependencices
-pip3 install twine
+.venv/bin/pip3 install twine build
 # install locally
-pip3 install -e .
+.venv/bin/pip3 install -e .
 # test using cli
-radoneye --help
+.venv/bin/radoneye --help
 # build
-python3 -m build
+.venv/bin/python3 -m build
 # view what is included into wheel
 unzip -l dist/*.whl
 # check wheel
-twine check dist/*.whl
+.venv/bin/twine check dist/*.whl
 # upload to pypi
-twine upload --repository pypi dist/*
+.venv/bin/twine upload --repository pypi dist/*
 ```
