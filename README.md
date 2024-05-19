@@ -4,13 +4,13 @@ Provides simple and convinient Python API to communicate with RadonEye bluetooth
 
 Supported devices:
 
-- RD200 (version 1) - ok (but no beep/history support, no counts/version in status)
-- RD200N (version 2) - ok (full support)
-- RD200P (version 2) - should work, not tested
+-   RD200 (version 1) - ok (but no history support, no counts/version in status)
+-   RD200N (version 2) - ok (full support)
+-   RD200P (version 2) - should work, not tested
 
 Version 1 support is implemented using publicly available information. I have no device to test on,
-if you have old RD200 device and are willing to help to build better support (beeps, history etc),
-then let me know.
+if you have old RD200 device and are willing to help to build better support (history etc), then let
+me know.
 
 ## Usage (API)
 
@@ -99,26 +99,7 @@ $ radoneye history 70C12E8A-27F6-3AEC-0BAD-95FA94BF17A9
 ...
 ```
 
-NOTE: On macOS bluetooth addresses are obfuscated to UUID.
-
-## Publishing
-
-```sh
-# install dependencices
-pip3 install twine
-# install locally
-pip3 install -e .
-# test using cli
-radoneye --help
-# build
-python3 -m build
-# view what is included into wheel
-unzip -l dist/*.whl
-# check wheel
-twine check dist/*.whl
-# upload to pypi
-twine upload --repository pypi dist/*
-```
+NOTE: On macOS bluetooth addresses are obfuscated to UUIDs.
 
 ## License
 

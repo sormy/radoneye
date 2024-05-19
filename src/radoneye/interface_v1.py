@@ -12,6 +12,9 @@ CHARACTERISTIC_V1_COMMAND = "00001524-1212-efde-1523-785feabcd123"
 CHARACTERISTIC_V1_STATUS = "00001525-1212-efde-1523-785feabcd123"
 COMMAND_V1_STATUS1 = [0x50]
 COMMAND_V1_STATUS2 = [0x51]
+COMMAND_V1_BEEP = [0xA1, 0x11]
+
+BEEP_DELAY = 0.2  # sec
 
 
 class RadonEyeMessageParserV1:
@@ -99,4 +102,6 @@ class RadonEyeAdapterV1(RadonEyeInterfaceBase):
         raise NotImplementedError
 
     async def beep(self, client: BleakClient) -> None:
-        raise NotImplementedError
+        await client.write_gatt_char(CHARACTERISTIC_V1_COMMAND, bytearray(COMMAND_V1_BEEP))
+        # there is some delay needed before you can do next beep, otherwise it will be just one beep
+        await asyncio.sleep(BEEP_DELAY)
