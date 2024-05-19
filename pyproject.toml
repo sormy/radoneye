@@ -18,7 +18,7 @@ license = {file = "LICENSE"}
 name = "radoneye"
 readme = "README.md"
 requires-python = ">=3.9"
-version = "1.0.0"
+version = "1.0.1"
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
