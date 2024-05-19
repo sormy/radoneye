@@ -1,12 +1,15 @@
 {
-  "[python]": {
-    "editor.formatOnSave": true,
-    "editor.codeActionsOnSave": {
-      "source.organizeImports": "explicit"
+    "[python]": {
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": "explicit"
+        },
+        "editor.defaultFormatter": "ms-python.black-formatter"
     },
-    "editor.defaultFormatter": "ms-python.black-formatter"
-  },
-  "python.analysis.typeCheckingMode": "strict",
-  "black-formatter.args": ["-l", "100"],
-  "editor.rulers": [100]
+    "[markdown][json][jsonc]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "python.analysis.typeCheckingMode": "strict",
+    "editor.rulers": [100]
 }

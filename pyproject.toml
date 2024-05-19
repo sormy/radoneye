@@ -29,3 +29,6 @@ Issues = "https://github.com/sormy/radoneye/issues"
 
 [project.scripts]
 radoneye = "radoneye.__main__:main"
+
+[tool.black]
+line-length = 100
