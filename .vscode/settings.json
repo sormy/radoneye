@@ -11,5 +11,6 @@
         "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
     "python.analysis.typeCheckingMode": "strict",
-    "editor.rulers": [100]
+    "editor.rulers": [100],
+    "python.testing.pytestEnabled": true
 }
