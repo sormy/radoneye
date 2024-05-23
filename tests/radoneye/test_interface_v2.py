@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, call
 import pytest
 from bleak import BleakClient
 from inline_snapshot import snapshot
+
 from radoneye.interface_v2 import (
     CHAR_UUID_COMMAND,
     CHAR_UUID_HISTORY,
@@ -144,8 +145,8 @@ def test_merge_history():
 async def test_retrieve_status(bleak_client: Any):
     result = await retrieve_status_v2(bleak_client, timeout=1)
 
-    assert bleak_client.start_notify.call_args[0][0] == CHAR_UUID_STATUS
-    assert bleak_client.stop_notify.call_args[0][0] == CHAR_UUID_STATUS
+    assert bleak_client.start_notify.mock_calls[0].args[0] == CHAR_UUID_STATUS
+    assert bleak_client.stop_notify.mock_calls[0].args[0] == CHAR_UUID_STATUS
 
     assert bleak_client.write_gatt_char.mock_calls == [
         call(CHAR_UUID_COMMAND, bytearray([COMMAND_STATUS])),
@@ -158,8 +159,8 @@ async def test_retrieve_status(bleak_client: Any):
 async def test_retrieve_history(bleak_client: Any):
     result = await retrieve_history_v2(bleak_client, timeout=1)
 
-    assert bleak_client.start_notify.call_args[0][0] == CHAR_UUID_HISTORY
-    assert bleak_client.stop_notify.call_args[0][0] == CHAR_UUID_HISTORY
+    assert bleak_client.start_notify.mock_calls[0].args[0] == CHAR_UUID_HISTORY
+    assert bleak_client.stop_notify.mock_calls[0].args[0] == CHAR_UUID_HISTORY
 
     assert bleak_client.write_gatt_char.mock_calls == [
         call(CHAR_UUID_COMMAND, bytearray([COMMAND_HISTORY])),

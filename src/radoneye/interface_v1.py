@@ -1,9 +1,12 @@
 import asyncio
+import math
+from struct import unpack
+from typing import cast
 
 from bleak import BleakClient
 from bleak.backends.characteristic import BleakGATTCharacteristic
 
-from radoneye.model import RadonEyeStatus
+from radoneye.model import RadonEyeHistory, RadonEyeStatus
 from radoneye.util import (
     format_counts,
     format_uptime,
@@ -26,8 +29,11 @@ COMMAND_STATUS_A6 = 0xA6  # requests message A6
 COMMAND_STATUS_AF = 0xAF  # requests message AF
 COMMAND_STATUS_50 = 0x50  # requests message 50
 COMMAND_STATUS_51 = 0x51  # requests message 51
+COMMAND_STATUS_E8 = 0xE8  # requests message E8 (history metadata)
 
-COMMAND_BEEP = 0xA1  # triggers beep
+COMMAND_HISTORY = 0xE9
+
+COMMAND_BEEP = 0xA1
 
 MSG_PREAMBLE_50 = 0x50
 MSG_PREAMBLE_51 = 0x51
@@ -35,6 +41,7 @@ MSG_PREAMBLE_A4 = 0xA4
 MSG_PREAMBLE_A6 = 0xA6
 MSG_PREAMBLE_A8 = 0xA8
 MSG_PREAMBLE_AF = 0xAF
+MSG_PREAMBLE_E8 = 0xE8
 
 BEEP_DELAY = 0.2  # sec
 
@@ -102,6 +109,19 @@ def parse_status(
     }
 
 
+def parse_history_size(msg_e8: bytearray) -> int:
+    return read_short(msg_e8, 2)
+
+
+def parse_history_data(msg_e9: bytearray, size: int) -> RadonEyeHistory:
+    values = cast(list[int], unpack("<" + "H" * size, msg_e9))
+    values_pci_l = [v / 37 / math.e for v in values]
+    return {
+        "values_bq_m3": [to_bq_m3(v) for v in values_pci_l],
+        "values_pci_l": [round_pci_l(v) for v in values_pci_l],
+    }
+
+
 def supports_v1(client: BleakClient) -> bool:
     return bool(client.services.get_service(SERVICE_UUID))
 
@@ -156,6 +176,46 @@ async def retrieve_status_v1(client: BleakClient, timeout: float | None = None) 
     await client.write_gatt_char(CHAR_UUID_COMMAND, bytearray([COMMAND_STATUS_A6]))
     result = await asyncio.wait_for(future, timeout)
     await client.stop_notify(CHAR_UUID_STATUS)
+    return result
+
+
+async def retrieve_history_v1(
+    client: BleakClient,
+    status_timeout: float | None = None,
+    history_timeout: float | None = None,
+) -> RadonEyeHistory:
+    loop = asyncio.get_running_loop()
+
+    size_future = loop.create_future()
+    result_future = loop.create_future()
+
+    result_size: int = -1
+    result_data = bytearray()
+
+    def callback_status(char: BleakGATTCharacteristic, data: bytearray) -> None:
+        nonlocal result_size
+        if data[0] == MSG_PREAMBLE_E8:
+            size_future.set_result(parse_history_size(data))
+
+    def callback_history(char: BleakGATTCharacteristic, data: bytearray) -> None:
+        nonlocal result_data
+        result_data.extend(data)
+        if len(result_data) >= result_size:
+            result_future.set_result(parse_history_data(result_data, result_size))
+
+    await client.start_notify(CHAR_UUID_STATUS, callback_status)  # type: ignore
+    await client.write_gatt_char(CHAR_UUID_COMMAND, bytearray([COMMAND_STATUS_E8]))
+    result_size = await asyncio.wait_for(size_future, status_timeout)
+    await client.stop_notify(CHAR_UUID_STATUS)
+
+    if result_size == 0:
+        result = RadonEyeHistory(values_bq_m3=[], values_pci_l=[])
+    else:
+        await client.start_notify(CHAR_UUID_HISTORY, callback_history)  # type: ignore
+        await client.write_gatt_char(CHAR_UUID_COMMAND, bytearray([COMMAND_HISTORY]))
+        result = await asyncio.wait_for(result_future, history_timeout)
+        await client.stop_notify(CHAR_UUID_HISTORY)
+
     return result
 
 

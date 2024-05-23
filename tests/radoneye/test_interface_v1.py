@@ -7,14 +7,20 @@ from inline_snapshot import snapshot
 
 from radoneye.interface_v1 import (
     CHAR_UUID_COMMAND,
+    CHAR_UUID_HISTORY,
     CHAR_UUID_STATUS,
     COMMAND_BEEP,
+    COMMAND_HISTORY,
     COMMAND_STATUS_10,
     COMMAND_STATUS_50,
     COMMAND_STATUS_51,
     COMMAND_STATUS_A6,
     COMMAND_STATUS_AF,
+    COMMAND_STATUS_E8,
+    parse_history_data,
+    parse_history_size,
     parse_status,
+    retrieve_history_v1,
     retrieve_status_v1,
     trigger_beep_v1,
 )
@@ -32,38 +38,67 @@ msg_af = b"\xAF\x07\x56\x31\x2E\x32\x2E\x34\x0A\x66\x66\x86\x3F\xB1\x0C\x40\x04\
 # triggered by command 0xA6
 msg_a6 = b"\xA6\x03\x52\x55\x32\x32\x2E\x34\x0A\x66\x66\x86\x3F\xB1\x0C\x40\x04\x00\x00\x00"  # ??RU2???????????????
 
-# triggered by command 0xE8
+# triggered by command 0xE8 (history status)
 msg_e8 = b"\xE8\x0B\x46\x00\x37\x29\x5C\x4F\x3F\x66\x66\x86\x3F\xB1\x0C\x40\x04\x00\x00\x00"  # ??___________???????
+
+# triggered by command 0xE9 (history data)
+msg_e9 = [
+    bytes.fromhex(msg)
+    for msg in [
+        "85 00 46 00 5E 00 7C 00 85 00 5E 00 82 00 79 00 58 00 82 00"
+        "8E 00 73 00 4F 00 61 00 93 00 8B 00 93 00 AE 00 9F 00 93 00"
+        "82 00 8B 00 85 00 8E 00 67 00 79 00 79 00 85 00 A5 00 73 00"
+        "A5 00 82 00 67 00 73 00 8B 00 70 00 46 00 6A 00 58 00 6A 00"
+        "C3 00 6A 00 73 00 85 00 67 00 8E 00 93 00 79 00 B1 00 B7 00"
+        "B7 00 BA 00 9C 00 9C 00 CC 00 82 00 61 00 58 00 96 00 8B 00"
+        "8B 00 C0 00 A5 00 A8 00 73 00 70 00 61 00 4C 00 46 00 43 00"
+    ]
+]
 
 
 @pytest.fixture
 def bleak_client():
-    notify_callback: Any = None
+    status_callback: Any = None
+    history_callback: Any = None
 
     def start_notify_side_effect(char: Any, callback: Any):
-        nonlocal notify_callback
-        notify_callback = callback
+        nonlocal status_callback
+        nonlocal history_callback
+        if char == CHAR_UUID_STATUS:
+            status_callback = callback
+        elif char == CHAR_UUID_HISTORY:
+            history_callback = callback
 
     def stop_notify_side_effect(char: Any):
-        nonlocal notify_callback
-        notify_callback = None
+        nonlocal status_callback
+        nonlocal history_callback
+        if char == CHAR_UUID_STATUS:
+            status_callback = None
+        elif char == CHAR_UUID_HISTORY:
+            history_callback = None
 
     def write_gatt_char_side_effect(char: Any, data: bytearray):
-        if notify_callback is not None:
+        if status_callback is not None:
             if data[0] == COMMAND_STATUS_10:
-                notify_callback(char, msg_a4)
-                notify_callback(char, msg_a8)
-                notify_callback(char, msg_ac)
-                notify_callback(char, msg_50)
-                notify_callback(char, msg_51)
+                status_callback(char, bytearray(msg_a4))
+                status_callback(char, bytearray(msg_a8))
+                status_callback(char, bytearray(msg_ac))
+                status_callback(char, bytearray(msg_50))
+                status_callback(char, bytearray(msg_51))
             elif data[0] == COMMAND_STATUS_50:
-                notify_callback(char, msg_50)
+                status_callback(char, bytearray(msg_50))
             elif data[0] == COMMAND_STATUS_51:
-                notify_callback(char, msg_51)
+                status_callback(char, bytearray(msg_51))
             elif data[0] == COMMAND_STATUS_A6:
-                notify_callback(char, msg_a6)
+                status_callback(char, bytearray(msg_a6))
             elif data[0] == COMMAND_STATUS_AF:
-                notify_callback(char, msg_af)
+                status_callback(char, bytearray(msg_af))
+            elif data[0] == COMMAND_STATUS_E8:
+                status_callback(char, bytearray(msg_e8))
+        if history_callback is not None:
+            if data[0] == COMMAND_HISTORY:
+                for msg in msg_e9:
+                    history_callback(char, bytearray(msg))
 
     client = MagicMock(BleakClient)
 
@@ -106,12 +141,21 @@ def test_parse_status():
     )
 
 
+def test_parse_history():
+    size = parse_history_size(bytearray(msg_e8))
+    result = parse_history_data(bytearray(b"".join(msg_e9)), size)
+    assert result["values_bq_m3"][:10] == snapshot([49, 26, 35, 46, 49, 35, 48, 45, 32, 48])
+    assert result["values_pci_l"][:10] == snapshot(
+        [1.32, 0.7, 0.93, 1.23, 1.32, 0.93, 1.29, 1.2, 0.87, 1.29]
+    )
+
+
 @pytest.mark.asyncio
 async def test_retrieve_status(bleak_client: Any):
     result = await retrieve_status_v1(bleak_client, timeout=1)
 
-    assert bleak_client.start_notify.call_args[0][0] == CHAR_UUID_STATUS
-    assert bleak_client.stop_notify.call_args[0][0] == CHAR_UUID_STATUS
+    assert bleak_client.start_notify.mock_calls[0].args[0] == CHAR_UUID_STATUS
+    assert bleak_client.stop_notify.mock_calls[0].args[0] == CHAR_UUID_STATUS
 
     assert bleak_client.write_gatt_char.mock_calls == [
         call(CHAR_UUID_COMMAND, bytearray([COMMAND_STATUS_10])),
@@ -142,29 +186,30 @@ async def test_retrieve_status(bleak_client: Any):
 
 
 @pytest.mark.asyncio
+async def test_retrieve_history(bleak_client: Any):
+    result = await retrieve_history_v1(bleak_client, status_timeout=1, history_timeout=1)
+
+    assert bleak_client.start_notify.mock_calls[0].args[0] == CHAR_UUID_STATUS
+    assert bleak_client.stop_notify.mock_calls[0].args[0] == CHAR_UUID_STATUS
+
+    assert bleak_client.start_notify.mock_calls[1].args[0] == CHAR_UUID_HISTORY
+    assert bleak_client.stop_notify.mock_calls[1].args[0] == CHAR_UUID_HISTORY
+
+    assert bleak_client.write_gatt_char.mock_calls == [
+        call(CHAR_UUID_COMMAND, bytearray([COMMAND_STATUS_E8])),
+        call(CHAR_UUID_COMMAND, bytearray([COMMAND_HISTORY])),
+    ]
+
+    expected_size = parse_history_size(bytearray(msg_e8))
+    expected_result = parse_history_data(bytearray(b"".join(msg_e9)), expected_size)
+
+    assert result == expected_result
+
+
+@pytest.mark.asyncio
 async def test_trigger_beep(bleak_client: Any):
     await trigger_beep_v1(bleak_client)
 
     assert bleak_client.write_gatt_char.mock_calls == [
         call(CHAR_UUID_COMMAND, bytearray([COMMAND_BEEP]))
     ]
-
-
-@pytest.mark.xfail
-def test_parse_history():
-    # command: E9
-
-    # attempt 5
-    # 85 00 46 00 5E 00 7C 00 85 00 5E 00 82 00 79 00 58 00 82 00
-    # 8E 00 73 00 4F 00 61 00 93 00 8B 00 93 00 AE 00 9F 00 93 00
-    # 82 00 8B 00 85 00 8E 00 67 00 79 00 79 00 85 00 A5 00 73 00
-    # A5 00 82 00 67 00 73 00 8B 00 70 00 46 00 6A 00 58 00 6A 00
-    # C3 00 6A 00 73 00 85 00 67 00 8E 00 93 00 79 00 B1 00 B7 00
-    # B7 00 BA 00 9C 00 9C 00 CC 00 82 00 61 00 58 00 96 00 8B 00
-    # 8B 00 C0 00 A5 00 A8 00 73 00 70 00 61 00 4C 00 46 00 43 00
-
-    # attempt 4
-    # 85 00 46 00 5E 00 7C 00 85 00 5E 00 82 00 79 00 ?? ?? ?? ??
-    # 8E 00 73 00 4F 00 61 00 93 00 8B 00 93 00 AE 00 ?? ?? ?? ??
-
-    raise NotImplementedError()

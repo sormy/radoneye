@@ -3,7 +3,12 @@ from typing import Union
 from bleak import BleakClient
 from bleak.backends.device import BLEDevice
 
-from radoneye.interface_v1 import retrieve_status_v1, supports_v1, trigger_beep_v1
+from radoneye.interface_v1 import (
+    retrieve_history_v1,
+    retrieve_status_v1,
+    supports_v1,
+    trigger_beep_v1,
+)
 from radoneye.interface_v2 import (
     retrieve_history_v2,
     retrieve_status_v2,
@@ -70,7 +75,9 @@ class RadonEyeClient:
 
     async def history(self) -> RadonEyeHistory:
         if supports_v1(self.client):
-            raise NotImplementedError("Not supported feature yet")
+            return await retrieve_history_v1(
+                self.client, self.status_read_timeout, self.history_read_timeout
+            )
         elif supports_v2(self.client):
             return await retrieve_history_v2(self.client, self.history_read_timeout)
         else:
