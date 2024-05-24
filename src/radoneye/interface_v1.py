@@ -6,10 +6,9 @@ from typing import cast
 from bleak import BleakClient
 from bleak.backends.characteristic import BleakGATTCharacteristic
 
+from radoneye.debug import dump_in, dump_out
 from radoneye.model import RadonEyeHistory, RadonEyeStatus
 from radoneye.util import (
-    dump_in,
-    dump_out,
     format_counts,
     format_uptime,
     read_float,
