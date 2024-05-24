@@ -23,6 +23,7 @@ async def cmd_list(args: ListCommandArgs):
 
 class BeepCommandArgs(NamedTuple):
     adapter: str | None
+    debug: bool
     connect_timeout: int
     address: str
 
@@ -32,6 +33,7 @@ async def cmd_beep(args: BeepCommandArgs):
         args.address,
         adapter=args.adapter,
         connect_timeout=args.connect_timeout,
+        debug=args.debug,
     ) as client:
         print(f"Beeping on {args.address}")
         await client.beep()
@@ -39,6 +41,7 @@ async def cmd_beep(args: BeepCommandArgs):
 
 class StatusCommandArgs(NamedTuple):
     adapter: str | None
+    debug: bool
     connect_timeout: int
     read_timeout: int
     output: Literal["text", "json"]
@@ -51,6 +54,7 @@ async def cmd_status(args: StatusCommandArgs):
         adapter=args.adapter,
         connect_timeout=args.connect_timeout,
         status_read_timeout=args.read_timeout,
+        debug=args.debug,
     ) as client:
         status = await client.status()
         if args.output == "text":
@@ -62,6 +66,7 @@ async def cmd_status(args: StatusCommandArgs):
 
 class HistoryCommandArgs(NamedTuple):
     adapter: str | None
+    debug: bool
     connect_timeout: int
     read_timeout: int
     output: Literal["text", "json"]
@@ -74,6 +79,7 @@ async def cmd_history(args: HistoryCommandArgs):
         adapter=args.adapter,
         connect_timeout=args.connect_timeout,
         history_read_timeout=args.read_timeout,
+        debug=args.debug,
     ) as client:
         history = await client.history()
         if args.output == "text":
@@ -93,6 +99,9 @@ async def main():
     )
 
     parser.add_argument("--adapter", type=int, help="bluetooth adapter name (hci0 on Linux)")
+    parser.add_argument(
+        "-d", "--debug", action="store_true", default=False, help="enable to see message dumps"
+    )
 
     subparsers = parser.add_subparsers(required=True, help="sub-command help")
 

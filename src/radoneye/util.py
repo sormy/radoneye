@@ -1,5 +1,6 @@
 import math
 from struct import unpack
+from textwrap import wrap
 
 
 def read_str_sz(buffer: bytearray, offset: int) -> str:
@@ -44,3 +45,16 @@ def format_uptime(uptime_minutes: int) -> str:
 
 def format_counts(counts_current: int, counts_previous: int) -> str:
     return f"{counts_current}/{counts_previous}"
+
+def dump_data(data: bytearray, input: bool, debug: bool) -> bytearray:
+    if debug:
+        lines = [f"{line.ljust(48)}# {str(bytearray.fromhex(line))}" for line in wrap(data.hex(" "), width=48)]
+        print(f"{"<-" if input else "->"} {"\n   ".join(lines)}")
+    return data
+
+def dump_in(data: bytearray, debug: bool) -> bytearray:
+    return dump_data(data, True, debug)
+
+
+def dump_out(data: bytearray, debug: bool) -> bytearray:
+    return dump_data(data, False, debug)

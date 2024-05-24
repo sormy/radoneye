@@ -25,6 +25,7 @@ class RadonEyeClient:
     connect_timeout: float
     status_read_timeout: float
     history_read_timeout: float
+    debug: bool
 
     def __init__(
         self,
@@ -33,12 +34,14 @@ class RadonEyeClient:
         status_read_timeout: float = 5,
         history_read_timeout: float = 60,
         adapter: str | None = None,
+        debug: bool = False,
     ) -> None:
         self.client = BleakClient(address_or_ble_device, timout=connect_timeout, adapter=adapter)
         self.adapter = adapter
         self.connect_timeout = connect_timeout
         self.status_read_timeout = status_read_timeout
         self.history_read_timeout = history_read_timeout
+        self.debug = debug
 
     async def __aenter__(self):
         await self.client.connect()  # type: ignore
@@ -59,26 +62,26 @@ class RadonEyeClient:
 
     async def beep(self) -> None:
         if supports_v1(self.client):
-            return await trigger_beep_v1(self.client)
+            return await trigger_beep_v1(self.client, self.debug)
         elif supports_v2(self.client):
-            return await trigger_beep_v2(self.client)
+            return await trigger_beep_v2(self.client, self.debug)
         else:
             raise NotImplementedError("Not supported device")
 
     async def status(self) -> RadonEyeStatus:
         if supports_v1(self.client):
-            return await retrieve_status_v1(self.client, self.status_read_timeout)
+            return await retrieve_status_v1(self.client, self.status_read_timeout, self.debug)
         elif supports_v2(self.client):
-            return await retrieve_status_v2(self.client, self.status_read_timeout)
+            return await retrieve_status_v2(self.client, self.status_read_timeout, self.debug)
         else:
             raise NotImplementedError("Not supported device")
 
     async def history(self) -> RadonEyeHistory:
         if supports_v1(self.client):
             return await retrieve_history_v1(
-                self.client, self.status_read_timeout, self.history_read_timeout
+                self.client, self.status_read_timeout, self.history_read_timeout, self.debug
             )
         elif supports_v2(self.client):
-            return await retrieve_history_v2(self.client, self.history_read_timeout)
+            return await retrieve_history_v2(self.client, self.history_read_timeout, self.debug)
         else:
             raise NotImplementedError("Not supported device")

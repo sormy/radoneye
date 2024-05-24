@@ -6,9 +6,9 @@ from bleak import BleakClient
 from inline_snapshot import snapshot
 
 from radoneye.interface_v1 import (
-    CHAR_UUID_COMMAND,
-    CHAR_UUID_HISTORY,
-    CHAR_UUID_STATUS,
+    CHAR_COMMAND,
+    CHAR_HISTORY,
+    CHAR_STATUS,
     COMMAND_BEEP,
     COMMAND_HISTORY,
     COMMAND_STATUS_10,
@@ -64,17 +64,17 @@ def bleak_client():
     def start_notify_side_effect(char: Any, callback: Any):
         nonlocal status_callback
         nonlocal history_callback
-        if char == CHAR_UUID_STATUS:
+        if char == CHAR_STATUS:
             status_callback = callback
-        elif char == CHAR_UUID_HISTORY:
+        elif char == CHAR_HISTORY:
             history_callback = callback
 
     def stop_notify_side_effect(char: Any):
         nonlocal status_callback
         nonlocal history_callback
-        if char == CHAR_UUID_STATUS:
+        if char == CHAR_STATUS:
             status_callback = None
-        elif char == CHAR_UUID_HISTORY:
+        elif char == CHAR_HISTORY:
             history_callback = None
 
     def write_gatt_char_side_effect(char: Any, data: bytearray):
@@ -154,13 +154,13 @@ def test_parse_history():
 async def test_retrieve_status(bleak_client: Any):
     result = await retrieve_status_v1(bleak_client, timeout=1)
 
-    assert bleak_client.start_notify.mock_calls[0].args[0] == CHAR_UUID_STATUS
-    assert bleak_client.stop_notify.mock_calls[0].args[0] == CHAR_UUID_STATUS
+    assert bleak_client.start_notify.mock_calls[0].args[0] == CHAR_STATUS
+    assert bleak_client.stop_notify.mock_calls[0].args[0] == CHAR_STATUS
 
     assert bleak_client.write_gatt_char.mock_calls == [
-        call(CHAR_UUID_COMMAND, bytearray([COMMAND_STATUS_10])),
-        call(CHAR_UUID_COMMAND, bytearray([COMMAND_STATUS_AF])),
-        call(CHAR_UUID_COMMAND, bytearray([COMMAND_STATUS_A6])),
+        call(CHAR_COMMAND, bytearray([COMMAND_STATUS_10])),
+        call(CHAR_COMMAND, bytearray([COMMAND_STATUS_AF])),
+        call(CHAR_COMMAND, bytearray([COMMAND_STATUS_A6])),
     ]
 
     assert result == snapshot(
@@ -189,15 +189,15 @@ async def test_retrieve_status(bleak_client: Any):
 async def test_retrieve_history(bleak_client: Any):
     result = await retrieve_history_v1(bleak_client, status_timeout=1, history_timeout=1)
 
-    assert bleak_client.start_notify.mock_calls[0].args[0] == CHAR_UUID_STATUS
-    assert bleak_client.stop_notify.mock_calls[0].args[0] == CHAR_UUID_STATUS
+    assert bleak_client.start_notify.mock_calls[0].args[0] == CHAR_STATUS
+    assert bleak_client.stop_notify.mock_calls[0].args[0] == CHAR_STATUS
 
-    assert bleak_client.start_notify.mock_calls[1].args[0] == CHAR_UUID_HISTORY
-    assert bleak_client.stop_notify.mock_calls[1].args[0] == CHAR_UUID_HISTORY
+    assert bleak_client.start_notify.mock_calls[1].args[0] == CHAR_HISTORY
+    assert bleak_client.stop_notify.mock_calls[1].args[0] == CHAR_HISTORY
 
     assert bleak_client.write_gatt_char.mock_calls == [
-        call(CHAR_UUID_COMMAND, bytearray([COMMAND_STATUS_E8])),
-        call(CHAR_UUID_COMMAND, bytearray([COMMAND_HISTORY])),
+        call(CHAR_COMMAND, bytearray([COMMAND_STATUS_E8])),
+        call(CHAR_COMMAND, bytearray([COMMAND_HISTORY])),
     ]
 
     expected_size = parse_history_size(bytearray(msg_e8))
@@ -211,5 +211,5 @@ async def test_trigger_beep(bleak_client: Any):
     await trigger_beep_v1(bleak_client)
 
     assert bleak_client.write_gatt_char.mock_calls == [
-        call(CHAR_UUID_COMMAND, bytearray([COMMAND_BEEP]))
+        call(CHAR_COMMAND, bytearray([COMMAND_BEEP]))
     ]

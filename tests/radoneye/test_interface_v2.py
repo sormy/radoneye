@@ -6,9 +6,9 @@ from bleak import BleakClient
 from inline_snapshot import snapshot
 
 from radoneye.interface_v2 import (
-    CHAR_UUID_COMMAND,
-    CHAR_UUID_HISTORY,
-    CHAR_UUID_STATUS,
+    CHAR_COMMAND,
+    CHAR_HISTORY,
+    CHAR_STATUS,
     COMMAND_BEEP,
     COMMAND_HISTORY,
     COMMAND_STATUS,
@@ -145,11 +145,11 @@ def test_merge_history():
 async def test_retrieve_status(bleak_client: Any):
     result = await retrieve_status_v2(bleak_client, timeout=1)
 
-    assert bleak_client.start_notify.mock_calls[0].args[0] == CHAR_UUID_STATUS
-    assert bleak_client.stop_notify.mock_calls[0].args[0] == CHAR_UUID_STATUS
+    assert bleak_client.start_notify.mock_calls[0].args[0] == CHAR_STATUS
+    assert bleak_client.stop_notify.mock_calls[0].args[0] == CHAR_STATUS
 
     assert bleak_client.write_gatt_char.mock_calls == [
-        call(CHAR_UUID_COMMAND, bytearray([COMMAND_STATUS])),
+        call(CHAR_COMMAND, bytearray([COMMAND_STATUS])),
     ]
 
     assert result == parse_status(bytearray.fromhex(msg_40))
@@ -159,11 +159,11 @@ async def test_retrieve_status(bleak_client: Any):
 async def test_retrieve_history(bleak_client: Any):
     result = await retrieve_history_v2(bleak_client, timeout=1)
 
-    assert bleak_client.start_notify.mock_calls[0].args[0] == CHAR_UUID_HISTORY
-    assert bleak_client.stop_notify.mock_calls[0].args[0] == CHAR_UUID_HISTORY
+    assert bleak_client.start_notify.mock_calls[0].args[0] == CHAR_HISTORY
+    assert bleak_client.stop_notify.mock_calls[0].args[0] == CHAR_HISTORY
 
     assert bleak_client.write_gatt_char.mock_calls == [
-        call(CHAR_UUID_COMMAND, bytearray([COMMAND_HISTORY])),
+        call(CHAR_COMMAND, bytearray([COMMAND_HISTORY])),
     ]
 
     pages = [parse_history_page(bytearray.fromhex(message)) for message in msg_41]
@@ -177,5 +177,5 @@ async def test_trigger_beep(bleak_client: Any):
     await trigger_beep_v2(bleak_client)
 
     assert bleak_client.write_gatt_char.mock_calls == [
-        call(CHAR_UUID_COMMAND, bytearray([COMMAND_BEEP]))
+        call(CHAR_COMMAND, bytearray([COMMAND_BEEP]))
     ]

@@ -6,13 +6,21 @@ from bleak import BleakClient
 from bleak.backends.characteristic import BleakGATTCharacteristic
 
 from radoneye.model import RadonEyeHistory, RadonEyeStatus
-from radoneye.util import format_counts, format_uptime, read_short, read_str, to_pci_l
+from radoneye.util import (
+    dump_in,
+    dump_out,
+    format_counts,
+    format_uptime,
+    read_short,
+    read_str,
+    to_pci_l,
+)
 
 SERVICE_UUID = "00001523-0000-1000-8000-00805f9b34fb"
 
-CHAR_UUID_COMMAND = "00001524-0000-1000-8000-00805f9b34fb"
-CHAR_UUID_STATUS = "00001525-0000-1000-8000-00805f9b34fb"
-CHAR_UUID_HISTORY = "00001526-0000-1000-8000-00805f9b34fb"
+CHAR_COMMAND = "00001524-0000-1000-8000-00805f9b34fb"
+CHAR_STATUS = "00001525-0000-1000-8000-00805f9b34fb"
+CHAR_HISTORY = "00001526-0000-1000-8000-00805f9b34fb"
 
 COMMAND_STATUS = 0x40
 COMMAND_HISTORY = 0x41
@@ -114,42 +122,50 @@ def supports_v2(client: BleakClient) -> bool:
     return bool(client.services.get_service(SERVICE_UUID))
 
 
-async def retrieve_status_v2(client: BleakClient, timeout: float | None = None) -> RadonEyeStatus:
+async def retrieve_status_v2(
+    client: BleakClient,
+    timeout: float | None = None,
+    debug: bool = False,
+) -> RadonEyeStatus:
     loop = asyncio.get_running_loop()
     future = loop.create_future()
 
     def callback(char: BleakGATTCharacteristic, data: bytearray) -> None:
         if data[0] == COMMAND_STATUS:
-            future.set_result(parse_status(data))
+            future.set_result(parse_status(dump_in(data, debug)))
 
-    await client.start_notify(CHAR_UUID_STATUS, callback)  # type: ignore
-    await client.write_gatt_char(CHAR_UUID_COMMAND, bytearray([COMMAND_STATUS]))
+    await client.start_notify(CHAR_STATUS, callback)  # type: ignore
+    await client.write_gatt_char(CHAR_COMMAND, dump_out(bytearray([COMMAND_STATUS]), debug))
     result = await asyncio.wait_for(future, timeout)
-    await client.stop_notify(CHAR_UUID_STATUS)
+    await client.stop_notify(CHAR_STATUS)
     return result
 
 
-async def retrieve_history_v2(client: BleakClient, timeout: float | None = None) -> RadonEyeHistory:
+async def retrieve_history_v2(
+    client: BleakClient,
+    timeout: float | None = None,
+    debug: bool = False,
+) -> RadonEyeHistory:
     loop = asyncio.get_running_loop()
     future = loop.create_future()
     pages: list[RadonEyeHistoryPage] = []
 
     def callback(char: BleakGATTCharacteristic, data: bytearray) -> None:
         if data[0] == COMMAND_HISTORY:
-            page = parse_history_page(data)
+            page = parse_history_page(dump_in(data, debug))
             pages.append(page)
             if page["page_count"] == page["page_no"]:
                 future.set_result(merge_history(pages))
 
-    await client.start_notify(CHAR_UUID_HISTORY, callback)  # type: ignore
-    await client.write_gatt_char(CHAR_UUID_COMMAND, bytearray([COMMAND_HISTORY]))
+    await client.start_notify(CHAR_HISTORY, callback)  # type: ignore
+    await client.write_gatt_char(CHAR_COMMAND, dump_out(bytearray([COMMAND_HISTORY]), debug))
     result = await asyncio.wait_for(future, timeout)
-    await client.stop_notify(CHAR_UUID_HISTORY)
+    await client.stop_notify(CHAR_HISTORY)
     return result
 
 
-async def trigger_beep_v2(client: BleakClient) -> None:
+async def trigger_beep_v2(client: BleakClient, debug: bool = False) -> None:
     # RadonEye app writes longer command, but it is actually enough to send one byte to beep
-    await client.write_gatt_char(CHAR_UUID_COMMAND, bytearray([COMMAND_BEEP]))
+    await client.write_gatt_char(CHAR_COMMAND, dump_out(bytearray([COMMAND_BEEP]), debug))
     # there is some delay needed before you can do next beep, otherwise it will be just one beep
     await asyncio.sleep(BEEP_DELAY)
