@@ -11,6 +11,7 @@ from radoneye.util import (
     dump_out,
     format_counts,
     format_uptime,
+    read_int,
     read_short,
     read_str,
     to_pci_l,
@@ -60,7 +61,7 @@ def parse_status(data: bytearray) -> RadonEyeStatus:
     counts_previous = read_short(data, 41)
     counts_str = format_counts(counts_current, counts_previous)
 
-    uptime_minutes = read_short(data, 43)
+    uptime_minutes = read_int(data, 43)
     uptime_str = format_uptime(uptime_minutes)
 
     peak_bq_m3 = read_short(data, 51)
