@@ -1,4 +1,5 @@
 import asyncio
+import math
 from struct import unpack
 from typing import TypedDict, cast
 
@@ -8,11 +9,17 @@ from bleak.backends.characteristic import BleakGATTCharacteristic
 from radoneye.debug import dump_in, dump_out
 from radoneye.model import RadonEyeHistory, RadonEyeStatus
 from radoneye.util import (
+    encode_bool,
+    encode_byte,
+    encode_short,
     format_counts,
     format_uptime,
+    read_bool,
+    read_byte,
     read_int,
     read_short,
     read_str,
+    to_bq_m3,
     to_pci_l,
 )
 
@@ -25,8 +32,10 @@ CHAR_HISTORY = "00001526-0000-1000-8000-00805f9b34fb"
 COMMAND_STATUS = 0x40
 COMMAND_HISTORY = 0x41
 COMMAND_BEEP = 0xA1
+COMMAND_CONFIG = 0xAA
 
 BEEP_DELAY = 0.2  # sec
+ALARM_DELAY = 0.2  # sec
 
 
 class RadonEyeHistoryPage(TypedDict):
@@ -46,6 +55,12 @@ def parse_status(data: bytearray) -> RadonEyeStatus:
     model = read_str(data, 16, 6)
 
     version = read_str(data, 22, 6)
+
+    alarm_enabled = read_bool(data, 29)
+    alarm_level_bq_m3 = read_short(data, 30)
+    alarm_level_pci_l = to_pci_l(alarm_level_bq_m3)
+    alarm_interval = read_byte(data, 32)
+    alarm_interval_minutes = alarm_interval * 10
 
     latest_bq_m3 = read_short(data, 33)
     latest_pci_l = to_pci_l(latest_bq_m3)
@@ -83,6 +98,10 @@ def parse_status(data: bytearray) -> RadonEyeStatus:
         "counts_str": counts_str,
         "uptime_minutes": uptime_minutes,
         "uptime_str": uptime_str,
+        "alarm_enabled": 1 if alarm_enabled else 0,
+        "alarm_level_bq_m3": alarm_level_bq_m3,
+        "alarm_level_pci_l": alarm_level_pci_l,
+        "alarm_interval_minutes": alarm_interval_minutes,
     }
 
 
@@ -169,3 +188,20 @@ async def trigger_beep_v2(client: BleakClient, debug: bool = False) -> None:
     await client.write_gatt_char(CHAR_COMMAND, dump_out(bytearray([COMMAND_BEEP]), debug))
     # there is some delay needed before you can do next beep, otherwise it will be just one beep
     await asyncio.sleep(BEEP_DELAY)
+
+
+async def setup_alarm_v2(
+    client: BleakClient,
+    enabled: bool,
+    level_pci_l: float,
+    interval_mins: int,  # app supports 10 mins, 1 hour and 6 hours
+    debug: bool = False,
+) -> None:
+    command = (
+        bytearray([COMMAND_CONFIG, 0x11])
+        + encode_bool(enabled)
+        + encode_short(to_bq_m3(level_pci_l))
+        + encode_byte(math.ceil(interval_mins / 10))
+    )
+    await client.write_gatt_char(CHAR_COMMAND, dump_out(command, debug))
+    await asyncio.sleep(ALARM_DELAY)  # doesn't work without delay

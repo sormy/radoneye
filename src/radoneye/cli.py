@@ -1,10 +1,12 @@
 import asyncio
 import json
+import math
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
 from typing import Literal, NamedTuple
 
 from radoneye.client import RadonEyeClient
 from radoneye.scanner import RadonEyeScanner
+from radoneye.util import to_pci_l
 
 
 class ListCommandArgs(NamedTuple):
@@ -91,6 +93,45 @@ async def cmd_history(args: HistoryCommandArgs):
             print(json.dumps(history, separators=(",", ":")))
 
 
+class AlarmCommandArgs(NamedTuple):
+    adapter: str | None
+    debug: bool
+    connect_timeout: int
+    address: str
+    enabled: bool
+    level: float  # in bq/m3 or pci/l
+    unit: Literal["bq/m3", "pci/l"]
+    interval: int  # mins
+
+
+async def cmd_alarm(args: AlarmCommandArgs):
+    async with RadonEyeClient(
+        args.address,
+        adapter=args.adapter,
+        connect_timeout=args.connect_timeout,
+        debug=args.debug,
+    ) as client:
+        print(
+            "Setup alarm: "
+            + ", ".join(
+                [
+                    line
+                    for line in [
+                        "enabled" if args.enabled else "disabled",
+                        f"level = {args.level} {args.unit}" if args.enabled else "",
+                        f"interval = {args.interval} mins" if args.enabled else "",
+                    ]
+                    if line != ""
+                ]
+            )
+        )
+        await client.alarm(
+            enabled=args.enabled,
+            level_pci_l=(args.level if args.unit == "pci/l" else to_pci_l(math.ceil(args.level))),
+            interval_mins=args.interval,
+        )
+
+
 async def main():
     parser = ArgumentParser(
         description="Ecosense RadonEye command line interface (currently supports RD200 v1/v2)",
@@ -150,6 +191,28 @@ async def main():
     )
     parser_history.add_argument("address", help="device address")
     parser_history.set_defaults(func=cmd_history)
+
+    parser_alarm = subparsers.add_parser(
+        "alarm",
+        help="set alarm configuration",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    parser_alarm.add_argument("address", help="device address")
+    parser_alarm.add_argument("--connect-timeout", type=int, help="connect timeout", default=10)
+    parser_alarm.add_argument("--enabled", action="store_true", help="enable alarm")
+    parser_alarm.add_argument(
+        "--disabled", dest="enabled", action="store_false", help="disable alarm"
+    )
+    parser_alarm.add_argument(
+        "--level", type=float, help="alarm level in bq/m3 or pci/l", default=2.0
+    )
+    parser_alarm.add_argument(
+        "--unit", choices=["bq/m3", "pci/l"], help="alarm level unit", default="pci/l"
+    )
+    parser_alarm.add_argument(
+        "--interval", type=int, help="alarm interval (in minutes)", default=60
+    )
+    parser_alarm.set_defaults(func=cmd_alarm)
 
     args = parser.parse_args()
     await args.func(args)

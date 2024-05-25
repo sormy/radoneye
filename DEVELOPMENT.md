@@ -31,7 +31,10 @@ Run tests:
 Update test snapshots:
 
 ```sh
+# create new snapshots
 .venv/bin/pytest --inline-snapshot=create
+# fix existing snapshots
+.venv/bin/pytest --inline-snapshot=fix
 ```
 
 Check coverage:

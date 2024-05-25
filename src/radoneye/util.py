@@ -1,5 +1,5 @@
 import math
-from struct import unpack
+from struct import pack, unpack
 
 
 def read_str_sz(buffer: bytearray, offset: int) -> str:
@@ -21,6 +21,26 @@ def read_int(buffer: bytearray, offset: int) -> int:
 
 def read_short(buffer: bytearray, offset: int) -> int:
     return unpack("<H", buffer[offset : (offset + 2)])[0]
+
+
+def encode_short(value: int) -> bytearray:
+    return bytearray(pack("<H", value))
+
+
+def read_bool(buffer: bytearray, offset: int) -> bool:
+    return unpack("<c", buffer[offset : (offset + 1)])[0][0] == 0x01
+
+
+def encode_bool(value: bool) -> bytearray:
+    return bytearray([0x01 if value else 0x00])
+
+
+def read_byte(buffer: bytearray, offset: int) -> int:
+    return unpack("<c", buffer[offset : (offset + 1)])[0][0]
+
+
+def encode_byte(value: int) -> bytearray:
+    return bytearray(pack("<c", bytes([value])))
 
 
 def round_pci_l(value_pci_l: float) -> float:

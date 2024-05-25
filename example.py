@@ -26,6 +26,12 @@ async def main():
             except Exception:
                 print("Unable to obtain history due to error", file=stderr)
 
+            try:
+                print("Setting up alarm")
+                await client.alarm(enabled=True, level_pci_l=2.0, interval_mins=60)
+            except Exception:
+                print("Unable to set alarm due to error", file=stderr)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

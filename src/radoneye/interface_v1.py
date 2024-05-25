@@ -107,6 +107,10 @@ def parse_status(
         "counts_str": counts_str,
         "uptime_minutes": uptime_minutes,
         "uptime_str": uptime_str,
+        "alarm_enabled": 0,  # TODO: not implemented
+        "alarm_level_bq_m3": 0,  # TODO: not implemented
+        "alarm_level_pci_l": 0,  # TODO: not implemented
+        "alarm_interval_minutes": 0,  # TODO: not implemented
     }
 
 

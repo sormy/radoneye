@@ -17,6 +17,7 @@ from radoneye.interface_v2 import (
     parse_status,
     retrieve_history_v2,
     retrieve_status_v2,
+    setup_alarm_v2,
     trigger_beep_v2,
 )
 
@@ -114,6 +115,10 @@ def test_parse_status():
             "counts_str": "3/1",
             "uptime_minutes": 12409,
             "uptime_str": "8d14h49m",
+            "alarm_enabled": 1,
+            "alarm_level_bq_m3": 74,
+            "alarm_level_pci_l": 2.0,
+            "alarm_interval_minutes": 60,
         }
     )
 
@@ -178,4 +183,49 @@ async def test_trigger_beep(bleak_client: Any):
 
     assert bleak_client.write_gatt_char.mock_calls == [
         call(CHAR_COMMAND, bytearray([COMMAND_BEEP]))
+    ]
+
+
+@pytest.mark.asyncio
+async def test_setup_alarm_enabled(bleak_client: Any):
+    await setup_alarm_v2(bleak_client, enabled=True, level_pci_l=2.0, interval_mins=60)
+
+    assert bleak_client.write_gatt_char.mock_calls == [
+        call(CHAR_COMMAND, bytearray.fromhex("aa 11 01 4a 00 06"))
+    ]
+
+
+@pytest.mark.asyncio
+async def test_setup_alarm_disabled(bleak_client: Any):
+    await setup_alarm_v2(bleak_client, enabled=False, level_pci_l=2.0, interval_mins=60)
+
+    assert bleak_client.write_gatt_char.mock_calls == [
+        call(CHAR_COMMAND, bytearray.fromhex("aa 11 00 4a 00 06"))
+    ]
+
+
+@pytest.mark.asyncio
+async def test_setup_alarm_interval_10m(bleak_client: Any):
+    await setup_alarm_v2(bleak_client, enabled=True, level_pci_l=2.0, interval_mins=10)
+
+    assert bleak_client.write_gatt_char.mock_calls == [
+        call(CHAR_COMMAND, bytearray.fromhex("aa 11 01 4a 00 01"))
+    ]
+
+
+@pytest.mark.asyncio
+async def test_setup_alarm_interval_1h(bleak_client: Any):
+    await setup_alarm_v2(bleak_client, enabled=True, level_pci_l=2.0, interval_mins=60)
+
+    assert bleak_client.write_gatt_char.mock_calls == [
+        call(CHAR_COMMAND, bytearray.fromhex("aa 11 01 4a 00 06"))
+    ]
+
+
+@pytest.mark.asyncio
+async def test_setup_alarm_interval_6h(bleak_client: Any):
+    await setup_alarm_v2(bleak_client, enabled=True, level_pci_l=2.0, interval_mins=360)
+
+    assert bleak_client.write_gatt_char.mock_calls == [
+        call(CHAR_COMMAND, bytearray.fromhex("aa 11 01 4a 00 24"))
     ]

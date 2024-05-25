@@ -18,6 +18,10 @@ class RadonEyeStatus(TypedDict):
     counts_str: str
     uptime_minutes: int
     uptime_str: str
+    alarm_enabled: int
+    alarm_level_bq_m3: int
+    alarm_level_pci_l: float
+    alarm_interval_minutes: int
 
 
 class RadonEyeHistory(TypedDict):

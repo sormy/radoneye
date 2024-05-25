@@ -25,8 +25,10 @@ Supported capabilites:
 | Read peak historical level | YES       | YES       |
 | Read raw particle counts   | YES       | YES       |
 | Read uptime                | YES       | YES       |
+| Read alarm configuration   | NO        | YES       |
 | Read history               | YES       | YES       |
 | Trigger beep               | YES       | YES       |
+| Setup alarm                | NO        | YES       |
 
 ## Usage (API)
 
@@ -60,6 +62,12 @@ async def main():
                 print(f"History: {json.dumps(await client.history())}")
             except Exception:
                 print("Unable to obtain history due to error", file=stderr)
+
+            try:
+                print("Setting up alarm")
+                await client.alarm(enabled=True, level_pci_l=2.0, interval_mins=60)
+            except Exception:
+                print("Unable to set alarm due to error", file=stderr)
 
 
 if __name__ == "__main__":

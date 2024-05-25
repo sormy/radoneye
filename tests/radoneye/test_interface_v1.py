@@ -137,6 +137,10 @@ def test_parse_status():
             "counts_str": "1/4",
             "uptime_minutes": 11713,
             "uptime_str": "8d03h13m",
+            "alarm_enabled": 0,
+            "alarm_level_bq_m3": 0,
+            "alarm_level_pci_l": 0,
+            "alarm_interval_minutes": 0,
         }
     )
 
@@ -181,6 +185,10 @@ async def test_retrieve_status(bleak_client: Any):
             "counts_str": "1/4",
             "uptime_minutes": 11713,
             "uptime_str": "8d03h13m",
+            "alarm_enabled": 0,
+            "alarm_level_bq_m3": 0,
+            "alarm_level_pci_l": 0,
+            "alarm_interval_minutes": 0,
         }
     )
 

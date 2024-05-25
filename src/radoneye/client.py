@@ -12,6 +12,7 @@ from radoneye.interface_v1 import (
 from radoneye.interface_v2 import (
     retrieve_history_v2,
     retrieve_status_v2,
+    setup_alarm_v2,
     supports_v2,
     trigger_beep_v2,
 )
@@ -83,5 +84,24 @@ class RadonEyeClient:
             )
         elif supports_v2(self.client):
             return await retrieve_history_v2(self.client, self.history_read_timeout, self.debug)
+        else:
+            raise NotImplementedError("Not supported device")
+
+    async def alarm(
+        self,
+        enabled: bool,
+        level_pci_l: float = 2.0,
+        interval_mins: int = 60,
+    ) -> None:
+        if supports_v1(self.client):
+            raise NotImplementedError("Not implemented yet")
+        elif supports_v2(self.client):
+            await setup_alarm_v2(
+                self.client,
+                enabled=enabled,
+                level_pci_l=level_pci_l,
+                interval_mins=interval_mins,
+                debug=self.debug,
+            )
         else:
             raise NotImplementedError("Not supported device")
