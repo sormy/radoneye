@@ -2,11 +2,31 @@
 
 Provides simple and convinient Python API to communicate with RadonEye bluetooth devices.
 
+Built as an alternative to half done similar projects where either 1 or 2 version is supported, not
+all status properties are decoded, no history support, no beep support etc.
+
 Supported devices:
 
--   RD200 (version 1) - ok (full support)
--   RD200N (version 2) - ok (full support)
--   RD200P (version 2) - should work, not tested
+| Name   | Version | Supported | Tested by        |
+| ------ | ------- | --------- | ---------------- |
+| RD200  | 1       | YES?      | Pending testing  |
+| RD200N | 2       | YES       | Tested by author |
+| RD200P | 2       | YES?      | Pending testing  |
+
+Supported capabilites:
+
+| Name                        | Version 1 | Version 2 |
+| --------------------------- | --------- | --------- |
+| Read serial number          | YES       | YES       |
+| Read software version       | YES       | YES       |
+| Read latest level           | YES       | YES       |
+| Read daily average level    | YES       | YES       |
+| Read monthly average level  | YES       | YES       |
+| Read preak historical level | YES       | YES       |
+| Read raw particle counts    | YES       | YES       |
+| Read uptime                 | YES       | YES       |
+| Read history                | YES       | YES       |
+| Trigger Beep                | YES       | YES       |
 
 ## Usage (API)
 
