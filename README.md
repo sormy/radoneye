@@ -26,7 +26,7 @@ Supported capabilites:
 | Read raw particle counts   | YES       | YES       |
 | Read uptime                | YES       | YES       |
 | Read history               | YES       | YES       |
-| Trigger Beep               | YES       | YES       |
+| Trigger beep               | YES       | YES       |
 
 ## Usage (API)
 
