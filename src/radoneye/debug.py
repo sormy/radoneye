@@ -26,7 +26,7 @@ def dump_data(data: bytearray, input: bool, debug: bool) -> bytearray:
         dir = "<-" if input else "->"
         text = "\n   ".join(
             [
-                f"{chunk.hex(" ").ljust(48)}# {dump_data_str(chunk)}"
+                f"{chunk.hex(' ').ljust(48)}# {dump_data_str(chunk)}"
                 for chunk in split_data(data, 16)
             ]
         )

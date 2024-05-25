@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from bleak import BleakScanner
 from bleak.backends.device import BLEDevice
 

@@ -5,7 +5,7 @@
 Install dependencies:
 
 ```sh
-python3 -m venv .venv
+python3.9 -m venv .venv
 .venv/bin/pip3 install -r requirements.txt
 .venv/bin/pip3 install -r requirements.dev.txt
 ```
@@ -20,6 +20,10 @@ Run CLI:
 
 ```sh
 PYTHONPATH=src .venv/bin/python3 -m radoneye
+
+# OR
+.venv/bin/pip3 install -e .
+.venv/bin/radoneye
 ```
 
 Run tests:
