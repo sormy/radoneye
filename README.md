@@ -15,18 +15,18 @@ Supported devices:
 
 Supported capabilites:
 
-| Name                        | Version 1 | Version 2 |
-| --------------------------- | --------- | --------- |
-| Read serial number          | YES       | YES       |
-| Read software version       | YES       | YES       |
-| Read latest level           | YES       | YES       |
-| Read daily average level    | YES       | YES       |
-| Read monthly average level  | YES       | YES       |
-| Read preak historical level | YES       | YES       |
-| Read raw particle counts    | YES       | YES       |
-| Read uptime                 | YES       | YES       |
-| Read history                | YES       | YES       |
-| Trigger Beep                | YES       | YES       |
+| Name                       | Version 1 | Version 2 |
+| -------------------------- | --------- | --------- |
+| Read serial number         | YES       | YES       |
+| Read software version      | YES       | YES       |
+| Read latest level          | YES       | YES       |
+| Read daily average level   | YES       | YES       |
+| Read monthly average level | YES       | YES       |
+| Read peak historical level | YES       | YES       |
+| Read raw particle counts   | YES       | YES       |
+| Read uptime                | YES       | YES       |
+| Read history               | YES       | YES       |
+| Trigger Beep               | YES       | YES       |
 
 ## Usage (API)
 
