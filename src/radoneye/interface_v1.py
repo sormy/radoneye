@@ -212,7 +212,7 @@ async def retrieve_history_v1(
     def callback_history(char: BleakGATTCharacteristic, data: bytearray) -> None:
         nonlocal result_data
         result_data.extend(dump_in(data, debug))
-        if len(result_data) >= result_size:
+        if len(result_data) >= result_size * 2:
             result_future.set_result(parse_history_data(result_data, result_size))
 
     await client.start_notify(CHAR_STATUS, callback_status)  # type: ignore
