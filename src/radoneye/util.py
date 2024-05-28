@@ -23,6 +23,12 @@ def read_short(buffer: bytearray, offset: int) -> int:
     return unpack("<H", buffer[offset : (offset + 2)])[0]
 
 
+def read_short_list(buffer: bytearray, offset: int, size: int) -> list[int]:
+    if offset == 0 and len(buffer) == size * 2:
+        return unpack("<" + "H" * size, buffer)
+    return unpack("<" + "H" * size, buffer[offset : (size * 2)])
+
+
 def encode_short(value: int) -> bytearray:
     return bytearray(pack("<H", value))
 

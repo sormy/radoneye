@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import math
-from struct import unpack
-from typing import TypedDict, cast
+from typing import TypedDict
 
 from bleak import BleakClient
 from bleak.backends.characteristic import BleakGATTCharacteristic
@@ -20,6 +19,7 @@ from radoneye.util import (
     read_byte,
     read_int,
     read_short,
+    read_short_list,
     read_str,
     to_bq_m3,
     to_pci_l,
@@ -113,7 +113,7 @@ def parse_history_page(data: bytearray) -> RadonEyeHistoryPage:
     page_count = data.pop(0)
     page_no = data.pop(0)
     value_count = data.pop(0)
-    values_bq_m3 = cast(list[int], unpack("<" + "H" * (len(data) // 2), data))
+    values_bq_m3 = read_short_list(data, 0, len(data) // 2)
     values_pci_l = [to_pci_l(x) for x in values_bq_m3]
 
     return {

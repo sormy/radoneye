@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any
 from unittest.mock import MagicMock, call
 
@@ -39,19 +40,19 @@ msg_af = b"\xAF\x07\x56\x31\x2E\x32\x2E\x34\x0A\x66\x66\x86\x3F\xB1\x0C\x40\x04\
 msg_a6 = b"\xA6\x03\x52\x55\x32\x32\x2E\x34\x0A\x66\x66\x86\x3F\xB1\x0C\x40\x04\x00\x00\x00"  # ??RU2???????????????
 
 # triggered by command 0xE8 (history status)
-msg_e8 = b"\xE8\x0B\x46\x00\x37\x29\x5C\x4F\x3F\x66\x66\x86\x3F\xB1\x0C\x40\x04\x00\x00\x00"  # ??___________???????
+msg_e8 = b"\xE8\x0B\x45\x00\x37\x29\x5C\x4F\x3F\x66\x66\x86\x3F\xB1\x0C\x40\x04\x00\x00\x00"  # ??___________???????
 
 # triggered by command 0xE9 (history data)
 msg_e9 = [
     bytes.fromhex(msg)
     for msg in [
-        "85 00 46 00 5E 00 7C 00 85 00 5E 00 82 00 79 00 58 00 82 00"
-        "8E 00 73 00 4F 00 61 00 93 00 8B 00 93 00 AE 00 9F 00 93 00"
-        "82 00 8B 00 85 00 8E 00 67 00 79 00 79 00 85 00 A5 00 73 00"
-        "A5 00 82 00 67 00 73 00 8B 00 70 00 46 00 6A 00 58 00 6A 00"
-        "C3 00 6A 00 73 00 85 00 67 00 8E 00 93 00 79 00 B1 00 B7 00"
-        "B7 00 BA 00 9C 00 9C 00 CC 00 82 00 61 00 58 00 96 00 8B 00"
-        "8B 00 C0 00 A5 00 A8 00 73 00 70 00 61 00 4C 00 46 00 43 00"
+        "85 00 46 00 5E 00 7C 00 85 00 5E 00 82 00 79 00 58 00 82 00",
+        "8E 00 73 00 4F 00 61 00 93 00 8B 00 93 00 AE 00 9F 00 93 00",
+        "82 00 8B 00 85 00 8E 00 67 00 79 00 79 00 85 00 A5 00 73 00",
+        "A5 00 82 00 67 00 73 00 8B 00 70 00 46 00 6A 00 58 00 6A 00",
+        "C3 00 6A 00 73 00 85 00 67 00 8E 00 93 00 79 00 B1 00 B7 00",
+        "B7 00 BA 00 9C 00 9C 00 CC 00 82 00 61 00 58 00 96 00 8B 00",
+        "8B 00 C0 00 A5 00 A8 00 73 00 70 00 61 00 4C 00 46 00 43 00",
     ]
 ]
 
@@ -78,27 +79,29 @@ def bleak_client():
             history_callback = None
 
     def write_gatt_char_side_effect(char: Any, data: bytearray):
+        loop = asyncio.get_running_loop()
+
         if status_callback is not None:
             if data[0] == COMMAND_STATUS_10:
-                status_callback(char, bytearray(msg_a4))
-                status_callback(char, bytearray(msg_a8))
-                status_callback(char, bytearray(msg_ac))
-                status_callback(char, bytearray(msg_50))
-                status_callback(char, bytearray(msg_51))
+                loop.call_soon(lambda buf: status_callback(char, buf), bytearray(msg_a4))
+                loop.call_soon(lambda buf: status_callback(char, buf), bytearray(msg_a8))
+                loop.call_soon(lambda buf: status_callback(char, buf), bytearray(msg_ac))
+                loop.call_soon(lambda buf: status_callback(char, buf), bytearray(msg_50))
+                loop.call_soon(lambda buf: status_callback(char, buf), bytearray(msg_51))
             elif data[0] == COMMAND_STATUS_50:
-                status_callback(char, bytearray(msg_50))
+                loop.call_soon(lambda buf: status_callback(char, buf), bytearray(msg_50))
             elif data[0] == COMMAND_STATUS_51:
-                status_callback(char, bytearray(msg_51))
+                loop.call_soon(lambda buf: status_callback(char, buf), bytearray(msg_51))
             elif data[0] == COMMAND_STATUS_A6:
-                status_callback(char, bytearray(msg_a6))
+                loop.call_soon(lambda buf: status_callback(char, buf), bytearray(msg_a6))
             elif data[0] == COMMAND_STATUS_AF:
-                status_callback(char, bytearray(msg_af))
+                loop.call_soon(lambda buf: status_callback(char, buf), bytearray(msg_af))
             elif data[0] == COMMAND_STATUS_E8:
-                status_callback(char, bytearray(msg_e8))
+                loop.call_soon(lambda buf: status_callback(char, buf), bytearray(msg_e8))
         if history_callback is not None:
             if data[0] == COMMAND_HISTORY:
                 for msg in msg_e9:
-                    history_callback(char, bytearray(msg))
+                    loop.call_soon(lambda buf: history_callback(char, buf), bytearray(msg))
 
     client = MagicMock(BleakClient)
 
@@ -148,6 +151,8 @@ def test_parse_status():
 def test_parse_history():
     size = parse_history_size(bytearray(msg_e8))
     result = parse_history_data(bytearray(b"".join(msg_e9)), size)
+    assert len(result["values_bq_m3"]) == snapshot(69)
+    assert len(result["values_bq_m3"]) == len(result["values_pci_l"])
     assert result["values_bq_m3"][:10] == snapshot([49, 26, 35, 46, 49, 35, 48, 45, 32, 48])
     assert result["values_pci_l"][:10] == snapshot(
         [1.32, 0.7, 0.93, 1.23, 1.32, 0.93, 1.29, 1.2, 0.87, 1.29]
@@ -167,29 +172,13 @@ async def test_retrieve_status(bleak_client: Any):
         call(CHAR_COMMAND, bytearray([COMMAND_STATUS_A6])),
     ]
 
-    assert result == snapshot(
-        {
-            "serial": "RU22012020159",
-            "model": "RD200",
-            "version": "V1.2.4",
-            "latest_bq_m3": 21,
-            "latest_pci_l": 0.58,
-            "day_avg_bq_m3": 54,
-            "day_avg_pci_l": 1.47,
-            "month_avg_bq_m3": 0,
-            "month_avg_pci_l": 0.0,
-            "peak_bq_m3": 81,
-            "peak_pci_l": 2.2,
-            "counts_current": 1,
-            "counts_previous": 4,
-            "counts_str": "1/4",
-            "uptime_minutes": 11713,
-            "uptime_str": "8d03h13m",
-            "alarm_enabled": 0,
-            "alarm_level_bq_m3": 0,
-            "alarm_level_pci_l": 0,
-            "alarm_interval_minutes": 0,
-        }
+    assert result == parse_status(
+        bytearray(msg_50),
+        bytearray(msg_51),
+        bytearray(msg_a4),
+        bytearray(msg_a6),
+        bytearray(msg_a8),
+        bytearray(msg_af),
     )
 
 
@@ -211,7 +200,8 @@ async def test_retrieve_history(bleak_client: Any):
     expected_size = parse_history_size(bytearray(msg_e8))
     expected_result = parse_history_data(bytearray(b"".join(msg_e9)), expected_size)
 
-    assert result == expected_result
+    assert result["values_bq_m3"] == expected_result["values_bq_m3"]
+    assert result["values_pci_l"] == expected_result["values_pci_l"]
 
 
 @pytest.mark.asyncio

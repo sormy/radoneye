@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import math
-from struct import unpack
-from typing import cast
 
 from bleak import BleakClient
 from bleak.backends.characteristic import BleakGATTCharacteristic
@@ -16,6 +14,7 @@ from radoneye.util import (
     read_float,
     read_int,
     read_short,
+    read_short_list,
     read_str_sz,
     round_pci_l,
     to_bq_m3,
@@ -121,7 +120,7 @@ def parse_history_size(msg_e8: bytearray) -> int:
 
 
 def parse_history_data(msg_e9: bytearray, size: int) -> RadonEyeHistory:
-    values = cast(list[int], unpack("<" + "H" * size, msg_e9))
+    values = read_short_list(msg_e9, 0, size)
     values_pci_l = [v / 37 / math.e for v in values]
     return {
         "values_bq_m3": [to_bq_m3(v) for v in values_pci_l],
@@ -213,8 +212,6 @@ async def retrieve_history_v1(
         nonlocal result_data
         result_data.extend(dump_in(data, debug))
         if len(result_data) >= result_size * 2:
-            # TODO: remove dump after testing
-            dump_in(result_data, debug)
             result_future.set_result(parse_history_data(result_data, result_size))
 
     await client.start_notify(CHAR_STATUS, callback_status)  # type: ignore

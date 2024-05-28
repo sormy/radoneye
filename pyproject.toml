@@ -37,4 +37,4 @@ line-length = 100
 profile = "black"
 
 [tool.pytest.ini_options]
-addopts = "--cov=radoneye --cov-report html:coverage"
+addopts = "--cov=radoneye --cov-report html:coverage -s -v"

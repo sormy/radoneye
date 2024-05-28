@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any
 from unittest.mock import MagicMock, call
 
@@ -79,12 +80,13 @@ def bleak_client():
         notify_callback = None
 
     def write_gatt_char_side_effect(char: Any, data: bytearray):
+        loop = asyncio.get_running_loop()
         if notify_callback is not None:
             if data[0] == COMMAND_STATUS:
-                notify_callback(char, bytearray.fromhex(msg_40))
+                loop.call_soon(lambda buf: notify_callback(char, buf), bytearray.fromhex(msg_40))
             elif data[0] == COMMAND_HISTORY:
                 for msg in msg_41:
-                    notify_callback(char, bytearray.fromhex(msg))
+                    loop.call_soon(lambda buf: notify_callback(char, buf), bytearray.fromhex(msg))
 
     client = MagicMock(BleakClient)
 
@@ -174,7 +176,8 @@ async def test_retrieve_history(bleak_client: Any):
     pages = [parse_history_page(bytearray.fromhex(message)) for message in msg_41]
     history = merge_history(pages)
 
-    assert result == history
+    assert result["values_bq_m3"] == history["values_bq_m3"]
+    assert result["values_pci_l"] == history["values_pci_l"]
 
 
 @pytest.mark.asyncio
