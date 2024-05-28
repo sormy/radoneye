@@ -213,6 +213,8 @@ async def retrieve_history_v1(
         nonlocal result_data
         result_data.extend(dump_in(data, debug))
         if len(result_data) >= result_size * 2:
+            # TODO: remove dump after testing
+            dump_in(result_data, debug)
             result_future.set_result(parse_history_data(result_data, result_size))
 
     await client.start_notify(CHAR_STATUS, callback_status)  # type: ignore
