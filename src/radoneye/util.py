@@ -1,5 +1,6 @@
 import math
-from struct import pack, unpack
+from struct import pack, unpack_from
+from typing import cast
 
 
 def read_str_sz(buffer: bytearray, offset: int) -> str:
@@ -12,21 +13,19 @@ def read_str(buffer: bytearray, offset: int, length: int) -> str:
 
 
 def read_float(buffer: bytearray, offset: int) -> float:
-    return float(unpack("<f", buffer[offset : (offset + 4)])[0])
+    return float(unpack_from("<f", buffer, offset)[0])
 
 
 def read_int(buffer: bytearray, offset: int) -> int:
-    return unpack("<I", buffer[offset : (offset + 4)])[0]
+    return unpack_from("<I", buffer, offset)[0]
 
 
 def read_short(buffer: bytearray, offset: int) -> int:
-    return unpack("<H", buffer[offset : (offset + 2)])[0]
+    return unpack_from("<H", buffer, offset)[0]
 
 
 def read_short_list(buffer: bytearray, offset: int, size: int) -> list[int]:
-    if offset == 0 and len(buffer) == size * 2:
-        return unpack("<" + "H" * size, buffer)
-    return unpack("<" + "H" * size, buffer[offset : (size * 2)])
+    return cast(list[int], unpack_from("<" + "H" * size, buffer, offset))
 
 
 def encode_short(value: int) -> bytearray:
@@ -34,7 +33,7 @@ def encode_short(value: int) -> bytearray:
 
 
 def read_bool(buffer: bytearray, offset: int) -> bool:
-    return unpack("<c", buffer[offset : (offset + 1)])[0][0] == 0x01
+    return unpack_from("<c", buffer, offset)[0][0] == 0x01
 
 
 def encode_bool(value: bool) -> bytearray:
@@ -42,7 +41,7 @@ def encode_bool(value: bool) -> bytearray:
 
 
 def read_byte(buffer: bytearray, offset: int) -> int:
-    return unpack("<c", buffer[offset : (offset + 1)])[0][0]
+    return unpack_from("<c", buffer, offset)[0][0]
 
 
 def encode_byte(value: int) -> bytearray:
