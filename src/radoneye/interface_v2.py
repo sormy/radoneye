@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import math
-from typing import TypedDict
+from typing import Literal, TypedDict
 
 from bleak import BleakClient
 from bleak.backends.characteristic import BleakGATTCharacteristic
@@ -195,15 +195,16 @@ async def trigger_beep_v2(client: BleakClient, debug: bool = False) -> None:
 async def setup_alarm_v2(
     client: BleakClient,
     enabled: bool,
-    level_pci_l: float,
-    interval_mins: int,  # app supports 10 mins, 1 hour and 6 hours
+    level: float,  # value in bq/m3 or pci/l
+    unit: Literal["bq/m3", "pci/l"],
+    interval: int,  # in minutes, app supports 10 mins, 1 hour and 6 hours
     debug: bool = False,
 ) -> None:
     command = (
         bytearray([COMMAND_CONFIG, 0x11])
         + encode_bool(enabled)
-        + encode_short(to_bq_m3(level_pci_l))
-        + encode_byte(math.ceil(interval_mins / 10))
+        + encode_short(to_bq_m3(level) if unit == "pci/l" else int(level))
+        + encode_byte(math.ceil(interval / 10))
     )
     await client.write_gatt_char(CHAR_COMMAND, dump_out(command, debug))
     await asyncio.sleep(ALARM_DELAY)  # doesn't work without delay

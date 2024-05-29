@@ -191,7 +191,7 @@ async def test_trigger_beep(bleak_client: Any):
 
 @pytest.mark.asyncio
 async def test_setup_alarm_enabled(bleak_client: Any):
-    await setup_alarm_v2(bleak_client, enabled=True, level_pci_l=2.0, interval_mins=60)
+    await setup_alarm_v2(bleak_client, enabled=True, level=2.0, unit="pci/l", interval=60)
 
     assert bleak_client.write_gatt_char.mock_calls == [
         call(CHAR_COMMAND, bytearray.fromhex("aa 11 01 4a 00 06"))
@@ -200,7 +200,7 @@ async def test_setup_alarm_enabled(bleak_client: Any):
 
 @pytest.mark.asyncio
 async def test_setup_alarm_disabled(bleak_client: Any):
-    await setup_alarm_v2(bleak_client, enabled=False, level_pci_l=2.0, interval_mins=60)
+    await setup_alarm_v2(bleak_client, enabled=False, level=2.0, unit="pci/l", interval=60)
 
     assert bleak_client.write_gatt_char.mock_calls == [
         call(CHAR_COMMAND, bytearray.fromhex("aa 11 00 4a 00 06"))
@@ -208,8 +208,17 @@ async def test_setup_alarm_disabled(bleak_client: Any):
 
 
 @pytest.mark.asyncio
+async def test_setup_alarm_bq_m3(bleak_client: Any):
+    await setup_alarm_v2(bleak_client, enabled=True, level=74, unit="bq/m3", interval=60)
+
+    assert bleak_client.write_gatt_char.mock_calls == [
+        call(CHAR_COMMAND, bytearray.fromhex("aa 11 01 4a 00 06"))
+    ]
+
+
+@pytest.mark.asyncio
 async def test_setup_alarm_interval_10m(bleak_client: Any):
-    await setup_alarm_v2(bleak_client, enabled=True, level_pci_l=2.0, interval_mins=10)
+    await setup_alarm_v2(bleak_client, enabled=True, level=2.0, unit="pci/l", interval=10)
 
     assert bleak_client.write_gatt_char.mock_calls == [
         call(CHAR_COMMAND, bytearray.fromhex("aa 11 01 4a 00 01"))
@@ -218,7 +227,7 @@ async def test_setup_alarm_interval_10m(bleak_client: Any):
 
 @pytest.mark.asyncio
 async def test_setup_alarm_interval_1h(bleak_client: Any):
-    await setup_alarm_v2(bleak_client, enabled=True, level_pci_l=2.0, interval_mins=60)
+    await setup_alarm_v2(bleak_client, enabled=True, level=2.0, unit="pci/l", interval=60)
 
     assert bleak_client.write_gatt_char.mock_calls == [
         call(CHAR_COMMAND, bytearray.fromhex("aa 11 01 4a 00 06"))
@@ -227,7 +236,7 @@ async def test_setup_alarm_interval_1h(bleak_client: Any):
 
 @pytest.mark.asyncio
 async def test_setup_alarm_interval_6h(bleak_client: Any):
-    await setup_alarm_v2(bleak_client, enabled=True, level_pci_l=2.0, interval_mins=360)
+    await setup_alarm_v2(bleak_client, enabled=True, level=2.0, unit="pci/l", interval=360)
 
     assert bleak_client.write_gatt_char.mock_calls == [
         call(CHAR_COMMAND, bytearray.fromhex("aa 11 01 4a 00 24"))

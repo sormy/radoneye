@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Union
+from typing import Literal, Union
 
 from bleak import BleakClient
 from bleak.backends.device import BLEDevice
@@ -92,8 +92,9 @@ class RadonEyeClient:
     async def alarm(
         self,
         enabled: bool,
-        level_pci_l: float = 2.0,
-        interval_mins: int = 60,
+        level: float,  # value in bq/m3 or pci/l
+        unit: Literal["bq/m3", "pci/l"],
+        interval: int,  # in minutes, app supports 10 mins, 1 hour and 6 hours
     ) -> None:
         if supports_v1(self.client):
             raise NotImplementedError("Not implemented yet")
@@ -101,8 +102,9 @@ class RadonEyeClient:
             await setup_alarm_v2(
                 self.client,
                 enabled=enabled,
-                level_pci_l=level_pci_l,
-                interval_mins=interval_mins,
+                level=level,
+                unit=unit,
+                interval=interval,
                 debug=self.debug,
             )
         else:

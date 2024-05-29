@@ -2,13 +2,11 @@ from __future__ import annotations
 
 import asyncio
 import json
-import math
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
 from typing import Literal, NamedTuple
 
 from radoneye.client import RadonEyeClient
 from radoneye.scanner import RadonEyeScanner
-from radoneye.util import to_pci_l
 
 
 class ListCommandArgs(NamedTuple):
@@ -129,8 +127,9 @@ async def cmd_alarm(args: AlarmCommandArgs):
         )
         await client.alarm(
             enabled=args.enabled,
-            level_pci_l=(args.level if args.unit == "pci/l" else to_pci_l(math.ceil(args.level))),
-            interval_mins=args.interval,
+            level=args.level,
+            unit=args.unit,
+            interval=args.interval,
         )
 
 
