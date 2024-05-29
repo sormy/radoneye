@@ -3,7 +3,7 @@
 Provides simple and convinient Python API to communicate with RadonEye bluetooth devices.
 
 Built as an alternative to half done similar projects where either 1 or 2 version is supported, not
-all status properties are decoded, no history support, no beep support etc.
+all status properties are decoded, no history support, no beep and alarm support etc.
 
 Supported devices:
 
