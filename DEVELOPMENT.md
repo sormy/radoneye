@@ -2,15 +2,16 @@
 
 ## Workspace
 
-Install dependencies:
+Install dependencies and create venv:
 
 ```sh
+brew install python@3.9
 python3.9 -m venv .venv
-.venv/bin/pip3 install -r requirements.txt
-.venv/bin/pip3 install -r requirements.dev.txt
+.venv/bin/pip3 install -r requirements.txt -r requirements.dev.txt
+.venv/bin/pip3 install -e .
 ```
 
-Enable Visual Studio Code:
+Enable Visual Studio Code support:
 
 ```sh
 echo "PYTHONPATH=.venv/lib" > .env
@@ -19,10 +20,6 @@ echo "PYTHONPATH=.venv/lib" > .env
 Run CLI:
 
 ```sh
-PYTHONPATH=src .venv/bin/python3 -m radoneye
-
-# OR
-.venv/bin/pip3 install -e .
 .venv/bin/radoneye
 ```
 
@@ -45,6 +42,13 @@ Check coverage:
 
 ```sh
 open coverage/index.html
+```
+
+Run integration tests:
+
+```sh
+brew install tox python@3.9 python@3.10 python@3.11 python@3.12
+tox
 ```
 
 ## Details
