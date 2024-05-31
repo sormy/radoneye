@@ -34,7 +34,7 @@ CHAR_HISTORY = "00001526-0000-1000-8000-00805f9b34fb"
 COMMAND_STATUS = 0x40
 COMMAND_HISTORY = 0x41
 COMMAND_BEEP = 0xA1
-COMMAND_CONFIG = 0xAA
+COMMAND_ALARM = 0xAA
 
 BEEP_DELAY = 0.2  # sec
 ALARM_DELAY = 0.2  # sec
@@ -207,7 +207,7 @@ class InterfaceV2(RadonEyeInterface):
         interval: int,
     ) -> None:
         command = (
-            bytearray([COMMAND_CONFIG, 0x11])
+            bytearray([COMMAND_ALARM, 0x11])
             + encode_bool(enabled)
             + encode_short(to_bq_m3(level) if unit == "pci/l" else level)
             + encode_byte(math.ceil(interval / 10))

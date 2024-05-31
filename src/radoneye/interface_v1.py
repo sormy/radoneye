@@ -11,6 +11,8 @@ from radoneye.model import RadonEyeHistory, RadonEyeInterface, RadonEyeStatus
 from radoneye.util import (
     format_counts,
     format_uptime,
+    read_bool,
+    read_byte,
     read_float,
     read_int,
     read_short,
@@ -31,19 +33,19 @@ COMMAND_STATUS_A6 = 0xA6  # requests message A6
 COMMAND_STATUS_AF = 0xAF  # requests message AF
 COMMAND_STATUS_50 = 0x50  # requests message 50
 COMMAND_STATUS_51 = 0x51  # requests message 51
-COMMAND_STATUS_E8 = 0xE8  # requests message E8 (history metadata)
+COMMAND_STATUS_E8 = 0xE8  # requests message E8
+COMMAND_HISTORY = 0xE9  # triggers history messages
+COMMAND_BEEP = 0xA1  # triggers beep
+COMMAND_ALARM = 0xAA  # requests message AC, updates alarm settings
 
-COMMAND_HISTORY = 0xE9
-
-COMMAND_BEEP = 0xA1
-
-MSG_PREAMBLE_50 = 0x50
-MSG_PREAMBLE_51 = 0x51
-MSG_PREAMBLE_A4 = 0xA4
-MSG_PREAMBLE_A6 = 0xA6
-MSG_PREAMBLE_A8 = 0xA8
-MSG_PREAMBLE_AF = 0xAF
-MSG_PREAMBLE_E8 = 0xE8
+MSG_PREAMBLE_50 = 0x50  # latest/daily/monthly radon, raw particle counts
+MSG_PREAMBLE_51 = 0x51  # uptime/peak radon
+MSG_PREAMBLE_A4 = 0xA4  # manufacturing date/serial
+MSG_PREAMBLE_A6 = 0xA6  # model series
+MSG_PREAMBLE_A8 = 0xA8  # model name
+MSG_PREAMBLE_AC = 0xAC  # alarm settings
+MSG_PREAMBLE_AF = 0xAF  # software version
+MSG_PREAMBLE_E8 = 0xE8  # history size
 
 BEEP_DELAY = 0.2  # sec
 
@@ -54,6 +56,7 @@ def parse_status(
     msg_a4: bytearray,
     msg_a6: bytearray,
     msg_a8: bytearray,
+    msg_ac: bytearray,
     msg_af: bytearray,
 ) -> RadonEyeStatus:
     # Most messages start with command code followed by byte representing length of data inside buffer
@@ -91,6 +94,10 @@ def parse_status(
     peak_pci_l = round_pci_l(peak_value)
     peak_bq_m3 = to_bq_m3(peak_value)
 
+    alarm_enabled = read_bool(msg_ac, 3)
+    alarm_interval = read_byte(msg_ac, 8)
+    alarm_interval_minutes = alarm_interval * 10
+
     return {
         "serial": serial,
         "model": model,
@@ -108,10 +115,10 @@ def parse_status(
         "counts_str": counts_str,
         "uptime_minutes": uptime_minutes,
         "uptime_str": uptime_str,
-        "alarm_enabled": 0,  # TODO: not implemented
+        "alarm_enabled": alarm_enabled,
         "alarm_level_bq_m3": 0,  # TODO: not implemented
         "alarm_level_pci_l": 0,  # TODO: not implemented
-        "alarm_interval_minutes": 0,  # TODO: not implemented
+        "alarm_interval_minutes": alarm_interval_minutes,
     }
 
 
@@ -154,6 +161,7 @@ class InterfaceV1(RadonEyeInterface):
         msg_a4: bytearray | None = None
         msg_a6: bytearray | None = None
         msg_a8: bytearray | None = None
+        msg_ac: bytearray | None = None
         msg_af: bytearray | None = None
 
         def callback(char: BleakGATTCharacteristic, data: bytearray) -> None:
@@ -162,6 +170,7 @@ class InterfaceV1(RadonEyeInterface):
             nonlocal msg_a4
             nonlocal msg_a6
             nonlocal msg_a8
+            nonlocal msg_ac
             nonlocal msg_af
 
             if data[0] == MSG_PREAMBLE_50:
@@ -174,16 +183,19 @@ class InterfaceV1(RadonEyeInterface):
                 msg_a6 = dump_in(data, self.debug)
             elif data[0] == MSG_PREAMBLE_A8:
                 msg_a8 = dump_in(data, self.debug)
+            elif data[0] == MSG_PREAMBLE_AC:
+                msg_ac = dump_in(data, self.debug)
             elif data[0] == MSG_PREAMBLE_AF:
                 msg_af = dump_in(data, self.debug)
 
-            if msg_50 and msg_51 and msg_a4 and msg_a6 and msg_a8 and msg_af:
+            if msg_50 and msg_51 and msg_a4 and msg_a6 and msg_a8 and msg_ac and msg_af:
                 status = parse_status(
                     msg_50,
                     msg_51,
                     msg_a4,
                     msg_a6,
                     msg_a8,
+                    msg_ac,
                     msg_af,
                 )
                 future.set_result(status)

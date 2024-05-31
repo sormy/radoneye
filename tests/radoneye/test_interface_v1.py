@@ -27,7 +27,7 @@ from radoneye.interface_v1 import (
 # triggered by command 0x10
 msg_a4 = b"\xA4\x0E\x32\x30\x32\x30\x31\x32\x30\x32\x53\x4E\x30\x31\x35\x39\x08\x00\x00\x00"  # ??20201202SN0159????
 msg_a8 = b"\xA8\x06\x05\x52\x44\x32\x30\x30\x30\x32\x53\x4E\x30\x31\x35\x39\x08\x00\x00\x00"  # ???RD200????????????
-msg_ac = b"\xAC\x07\x00\x00\x00\x00\x40\x40\x06\x32\x53\x4E\x30\x31\x35\x39\x08\x00\x00\x00"  # ??_______???????????
+msg_ac = b"\xAC\x07\x00\x01\x00\x00\x40\x40\x06\x32\x53\x4E\x30\x31\x35\x39\x08\x00\x00\x00"  # ??_______???????????
 msg_50 = b"\x50\x10\xE1\x7A\x14\x3F\xF6\x28\xBC\x3F\x00\x00\x00\x00\x01\x00\x04\x00\x00\x00"  # ??________________??
 msg_51 = b"\x51\x0E\x02\x00\xC1\x2D\x00\x00\x3E\x40\x08\x00\x50\xB1\x0C\x40\x04\x00\x00\x00"  # ??______________????
 
@@ -122,6 +122,7 @@ def test_parse_status():
         bytearray(msg_a4),
         bytearray(msg_a6),
         bytearray(msg_a8),
+        bytearray(msg_ac),
         bytearray(msg_af),
     )
 
@@ -143,10 +144,10 @@ def test_parse_status():
             "counts_str": "1/4",
             "uptime_minutes": 11713,
             "uptime_str": "8d03h13m",
-            "alarm_enabled": 0,
+            "alarm_enabled": 1,
             "alarm_level_bq_m3": 0,
             "alarm_level_pci_l": 0,
-            "alarm_interval_minutes": 0,
+            "alarm_interval_minutes": 60,
         }
     )
 
@@ -181,6 +182,7 @@ async def test_retrieve_status(bleak_client: Any, radoneye_interface: InterfaceV
         bytearray(msg_a4),
         bytearray(msg_a6),
         bytearray(msg_a8),
+        bytearray(msg_ac),
         bytearray(msg_af),
     )
 
