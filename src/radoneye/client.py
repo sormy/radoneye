@@ -55,14 +55,14 @@ class RadonEyeClient:
 
     async def alarm(
         self,
-        enabled: bool,
+        enabled: bool,  # even when disabled, we still need to provide alarm configuration
         level: float,  # value in bq/m3 or pci/l
-        unit: RadonUnit,
+        unit: RadonUnit,  # bq/m3 or pci/l
         interval: int,  # in minutes, app supports 10 mins, 1 hour and 6 hours
     ) -> None:
-        return await self.__get_interface().setup_alarm(enabled, level, unit, interval)
+        return await self.__get_interface().alarm(enabled, level, unit, interval)
 
-    def __get_interface(self):
+    def __get_interface(self) -> RadonEyeInterface:
         if self.interface:
             return self.interface
 

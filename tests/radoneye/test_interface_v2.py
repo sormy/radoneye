@@ -193,7 +193,7 @@ async def test_trigger_beep(bleak_client: Any, radoneye_interface: InterfaceV2):
 
 @pytest.mark.asyncio
 async def test_setup_alarm_enabled(bleak_client: Any, radoneye_interface: InterfaceV2):
-    await radoneye_interface.setup_alarm(enabled=True, level=2.0, unit="pci/l", interval=60)
+    await radoneye_interface.alarm(enabled=True, level=2.0, unit="pci/l", interval=60)
 
     assert bleak_client.write_gatt_char.mock_calls == [
         call(CHAR_COMMAND, bytearray.fromhex("aa 11 01 4a 00 06"))
@@ -202,7 +202,7 @@ async def test_setup_alarm_enabled(bleak_client: Any, radoneye_interface: Interf
 
 @pytest.mark.asyncio
 async def test_setup_alarm_disabled(bleak_client: Any, radoneye_interface: InterfaceV2):
-    await radoneye_interface.setup_alarm(enabled=False, level=2.0, unit="pci/l", interval=60)
+    await radoneye_interface.alarm(enabled=False, level=2.0, unit="pci/l", interval=60)
 
     assert bleak_client.write_gatt_char.mock_calls == [
         call(CHAR_COMMAND, bytearray.fromhex("aa 11 00 4a 00 06"))
@@ -211,7 +211,7 @@ async def test_setup_alarm_disabled(bleak_client: Any, radoneye_interface: Inter
 
 @pytest.mark.asyncio
 async def test_setup_alarm_bq_m3(bleak_client: Any, radoneye_interface: InterfaceV2):
-    await radoneye_interface.setup_alarm(enabled=True, level=74, unit="bq/m3", interval=60)
+    await radoneye_interface.alarm(enabled=True, level=74, unit="bq/m3", interval=60)
 
     assert bleak_client.write_gatt_char.mock_calls == [
         call(CHAR_COMMAND, bytearray.fromhex("aa 11 01 4a 00 06"))
@@ -220,7 +220,7 @@ async def test_setup_alarm_bq_m3(bleak_client: Any, radoneye_interface: Interfac
 
 @pytest.mark.asyncio
 async def test_setup_alarm_interval_10m(bleak_client: Any, radoneye_interface: InterfaceV2):
-    await radoneye_interface.setup_alarm(enabled=True, level=2.0, unit="pci/l", interval=10)
+    await radoneye_interface.alarm(enabled=True, level=2.0, unit="pci/l", interval=10)
 
     assert bleak_client.write_gatt_char.mock_calls == [
         call(CHAR_COMMAND, bytearray.fromhex("aa 11 01 4a 00 01"))
@@ -229,7 +229,7 @@ async def test_setup_alarm_interval_10m(bleak_client: Any, radoneye_interface: I
 
 @pytest.mark.asyncio
 async def test_setup_alarm_interval_1h(bleak_client: Any, radoneye_interface: InterfaceV2):
-    await radoneye_interface.setup_alarm(enabled=True, level=2.0, unit="pci/l", interval=60)
+    await radoneye_interface.alarm(enabled=True, level=2.0, unit="pci/l", interval=60)
 
     assert bleak_client.write_gatt_char.mock_calls == [
         call(CHAR_COMMAND, bytearray.fromhex("aa 11 01 4a 00 06"))
@@ -238,7 +238,7 @@ async def test_setup_alarm_interval_1h(bleak_client: Any, radoneye_interface: In
 
 @pytest.mark.asyncio
 async def test_setup_alarm_interval_6h(bleak_client: Any, radoneye_interface: InterfaceV2):
-    await radoneye_interface.setup_alarm(enabled=True, level=2.0, unit="pci/l", interval=360)
+    await radoneye_interface.alarm(enabled=True, level=2.0, unit="pci/l", interval=360)
 
     assert bleak_client.write_gatt_char.mock_calls == [
         call(CHAR_COMMAND, bytearray.fromhex("aa 11 01 4a 00 24"))

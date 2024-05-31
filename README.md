@@ -27,8 +27,8 @@ Supported capabilites:
 | Read uptime                | YES       | YES       |
 | Read history               | YES       | YES       |
 | Trigger beep               | YES       | YES       |
-| Read alarm settings        | NO        | YES       |
-| Set alarm settings         | NO        | YES       |
+| Read alarm settings        | YES       | YES       |
+| Set alarm settings         | YES       | YES       |
 
 ## Usage (API)
 

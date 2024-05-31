@@ -199,7 +199,7 @@ class InterfaceV2(RadonEyeInterface):
         # there is some delay needed before you can do next beep, otherwise it will be just one beep
         await asyncio.sleep(BEEP_DELAY)
 
-    async def setup_alarm(
+    async def alarm(
         self,
         enabled: bool,
         level: float,

@@ -7,8 +7,11 @@ from bleak import BleakClient
 from bleak.backends.characteristic import BleakGATTCharacteristic
 
 from radoneye.debug import dump_in, dump_out
-from radoneye.model import RadonEyeHistory, RadonEyeInterface, RadonEyeStatus
+from radoneye.model import RadonEyeHistory, RadonEyeInterface, RadonEyeStatus, RadonUnit
 from radoneye.util import (
+    encode_bool,
+    encode_byte,
+    encode_float,
     format_counts,
     format_uptime,
     read_bool,
@@ -20,6 +23,7 @@ from radoneye.util import (
     read_str_sz,
     round_pci_l,
     to_bq_m3,
+    to_pci_l,
 )
 
 SERVICE_UUID = "00001523-1212-efde-1523-785feabcd123"
@@ -48,6 +52,7 @@ MSG_PREAMBLE_AF = 0xAF  # software version
 MSG_PREAMBLE_E8 = 0xE8  # history size
 
 BEEP_DELAY = 0.2  # sec
+ALARM_DELAY = 0.2  # sec
 
 
 def parse_status(
@@ -62,39 +67,42 @@ def parse_status(
     # Most messages start with command code followed by byte representing length of data inside buffer
     # buffer has at most 20 bytes (including command code), unused buffer part can contain "trash".
 
-    serial_part1 = read_str_sz(msg_a6, offset=1)  # series?
-    serial_part2 = read_str_sz(msg_a4, offset=1)[2:8]  # manufacturing date (YYMMDD)?
-    serial_part3 = read_str_sz(msg_a4, offset=1)[-4:]  # serial within manufacturing date?
+    serial_part1 = read_str_sz(msg_a6, 1)  # series?
+    serial_part2 = read_str_sz(msg_a4, 1)[2:8]  # manufacturing date (YYMMDD)?
+    serial_part3 = read_str_sz(msg_a4, 1)[-4:]  # serial within manufacturing date?
     serial = serial_part1 + serial_part2 + serial_part3  # example: {RU2}{201202}{0159}
 
-    model = read_str_sz(msg_a8, offset=2)
+    model = read_str_sz(msg_a8, 2)
 
-    version = read_str_sz(msg_af, offset=1).rstrip()  # value has useless trailing new line
+    version = read_str_sz(msg_af, 1).rstrip()  # value has useless trailing new line
 
-    latest_value = read_float(msg_50, offset=2)
+    latest_value = read_float(msg_50, 2)
     latest_pci_l = round_pci_l(latest_value)
     latest_bq_m3 = to_bq_m3(latest_value)
 
-    day_avg_value = read_float(msg_50, offset=6)
+    day_avg_value = read_float(msg_50, 6)
     day_avg_pci_l = round_pci_l(day_avg_value)
     day_avg_bq_m3 = to_bq_m3(day_avg_value)
 
-    month_avg_value = read_float(msg_50, offset=10)
+    month_avg_value = read_float(msg_50, 10)
     month_avg_pci_l = round_pci_l(month_avg_value)
     month_avg_bq_m3 = to_bq_m3(month_avg_value)
 
-    counts_current = read_short(msg_50, 14)  # is it correct?
-    counts_previous = read_short(msg_50, 16)  # is it correct?
+    counts_current = read_short(msg_50, 14)
+    counts_previous = read_short(msg_50, 16)
     counts_str = format_counts(counts_current, counts_previous)
 
-    uptime_minutes = read_int(msg_51, offset=4)
+    uptime_minutes = read_int(msg_51, 4)
     uptime_str = format_uptime(uptime_minutes)
 
-    peak_value = read_float(msg_51, offset=12)
+    peak_value = read_float(msg_51, 12)
     peak_pci_l = round_pci_l(peak_value)
     peak_bq_m3 = to_bq_m3(peak_value)
 
     alarm_enabled = read_bool(msg_ac, 3)
+    alarm_level_value = read_float(msg_ac, 4)
+    alarm_level_pci_l = round_pci_l(alarm_level_value)
+    alarm_level_bq_m3 = to_bq_m3(alarm_level_pci_l)
     alarm_interval = read_byte(msg_ac, 8)
     alarm_interval_minutes = alarm_interval * 10
 
@@ -116,8 +124,8 @@ def parse_status(
         "uptime_minutes": uptime_minutes,
         "uptime_str": uptime_str,
         "alarm_enabled": alarm_enabled,
-        "alarm_level_bq_m3": 0,  # TODO: not implemented
-        "alarm_level_pci_l": 0,  # TODO: not implemented
+        "alarm_level_bq_m3": alarm_level_bq_m3,
+        "alarm_level_pci_l": alarm_level_pci_l,
         "alarm_interval_minutes": alarm_interval_minutes,
     }
 
@@ -260,3 +268,19 @@ class InterfaceV1(RadonEyeInterface):
         )
         # there is some delay needed before you can do next beep, otherwise it will be just one beep
         await asyncio.sleep(BEEP_DELAY)
+
+    async def alarm(
+        self,
+        enabled: bool,
+        level: float,
+        unit: RadonUnit,
+        interval: int,
+    ) -> None:
+        command = (
+            bytearray([COMMAND_ALARM, 0x11])
+            + encode_bool(enabled)
+            + encode_float(level if unit == "pci/l" else to_pci_l(level))
+            + encode_byte(math.ceil(interval / 10))
+        )
+        await self.client.write_gatt_char(CHAR_COMMAND, dump_out(command, self.debug))
+        await asyncio.sleep(ALARM_DELAY)  # doesn't work without delay

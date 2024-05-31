@@ -20,7 +20,7 @@ class RadonEyeStatus(TypedDict):
     uptime_minutes: int
     uptime_str: str
     alarm_enabled: int
-    alarm_level_bq_m3: int
+    alarm_level_bq_m3: float
     alarm_level_pci_l: float
     alarm_interval_minutes: int
 
@@ -51,7 +51,7 @@ class RadonEyeInterface:
         raise NotImplementedError("Not supported method beep()")
 
     @abstractmethod
-    async def setup_alarm(
+    async def alarm(
         self,
         enabled: bool,
         level: float,

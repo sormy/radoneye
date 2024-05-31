@@ -33,6 +33,10 @@ def read_short_list(buffer: bytearray, offset: int, size: int) -> list[int]:
     return cast(list[int], unpack_from("<" + "H" * size, buffer, offset))
 
 
+def encode_float(value: float) -> bytearray:
+    return bytearray(pack("<f", value))
+
+
 def encode_short(value: int | float) -> bytearray:
     value_to_pack = round(value) if isinstance(value, float) else value
     return bytearray(pack("<H", value_to_pack))
@@ -66,7 +70,7 @@ def to_bq_m3(value_pci_l: float) -> float:
     return round(value_pci_l * 37)
 
 
-def to_pci_l(value_bq_m3: int) -> float:
+def to_pci_l(value_bq_m3: float) -> float:
     return round_pci_l(value_bq_m3 / 37)
 
 
