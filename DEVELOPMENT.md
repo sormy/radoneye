@@ -65,6 +65,12 @@ Enable debug mode (dump messages):
 radoneye -d ...
 ```
 
+Turn off rounding:
+
+```sh
+RADONEYE_ROUNDING_OFF=true radoneye ...
+```
+
 ## Details
 
 ### Beep

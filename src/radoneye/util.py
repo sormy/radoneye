@@ -1,6 +1,11 @@
+from __future__ import annotations
+
 import math
+import os
 from struct import pack, unpack_from
 from typing import cast
+
+RADONEYE_ROUNDING_OFF = os.environ.get("RADONEYE_ROUNDING_OFF", "false") == "true"
 
 
 def read_str_sz(buffer: bytearray, offset: int) -> str:
@@ -28,8 +33,9 @@ def read_short_list(buffer: bytearray, offset: int, size: int) -> list[int]:
     return cast(list[int], unpack_from("<" + "H" * size, buffer, offset))
 
 
-def encode_short(value: int) -> bytearray:
-    return bytearray(pack("<H", value))
+def encode_short(value: int | float) -> bytearray:
+    value_to_pack = round(value) if isinstance(value, float) else value
+    return bytearray(pack("<H", value_to_pack))
 
 
 def read_bool(buffer: bytearray, offset: int) -> bool:
@@ -49,10 +55,14 @@ def encode_byte(value: int) -> bytearray:
 
 
 def round_pci_l(value_pci_l: float) -> float:
+    if RADONEYE_ROUNDING_OFF:
+        return value_pci_l
     return round(value_pci_l, 2)
 
 
-def to_bq_m3(value_pci_l: float) -> int:
+def to_bq_m3(value_pci_l: float) -> float:
+    if RADONEYE_ROUNDING_OFF:
+        return value_pci_l * 37
     return round(value_pci_l * 37)
 
 

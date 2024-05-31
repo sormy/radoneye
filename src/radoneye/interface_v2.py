@@ -209,7 +209,7 @@ class InterfaceV2(RadonEyeInterface):
         command = (
             bytearray([COMMAND_CONFIG, 0x11])
             + encode_bool(enabled)
-            + encode_short(to_bq_m3(level) if unit == "pci/l" else int(level))
+            + encode_short(to_bq_m3(level) if unit == "pci/l" else level)
             + encode_byte(math.ceil(interval / 10))
         )
         await self.client.write_gatt_char(CHAR_COMMAND, dump_out(command, self.debug))
