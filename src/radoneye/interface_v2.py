@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import asyncio
 import math
-from typing import Literal, TypedDict
+from typing import TypedDict
 
 from bleak import BleakClient
 from bleak.backends.characteristic import BleakGATTCharacteristic
 
 from radoneye.debug import dump_in, dump_out
-from radoneye.model import RadonEyeHistory, RadonEyeStatus
+from radoneye.model import RadonEyeHistory, RadonEyeInterface, RadonEyeStatus, RadonUnit
 from radoneye.util import (
     encode_bool,
     encode_byte,
@@ -139,72 +139,78 @@ def merge_history(pages: list[RadonEyeHistoryPage]) -> RadonEyeHistory:
     }
 
 
-def supports_v2(client: BleakClient) -> bool:
-    return bool(client.services.get_service(SERVICE_UUID))
+class InterfaceV2(RadonEyeInterface):
+    def __init__(
+        self,
+        client: BleakClient,
+        status_read_timeout: float | None = None,
+        history_read_timeout: float | None = None,
+        debug: bool = False,
+    ):
+        self.client = client
+        self.status_read_timeout = status_read_timeout
+        self.history_read_timeout = history_read_timeout
+        self.debug = debug
 
+    def supports(self) -> bool:
+        return bool(self.client.services.get_service(SERVICE_UUID))
 
-async def retrieve_status_v2(
-    client: BleakClient,
-    timeout: float | None = None,
-    debug: bool = False,
-) -> RadonEyeStatus:
-    loop = asyncio.get_running_loop()
-    future = loop.create_future()
+    async def status(self) -> RadonEyeStatus:
+        loop = asyncio.get_running_loop()
+        future = loop.create_future()
 
-    def callback(char: BleakGATTCharacteristic, data: bytearray) -> None:
-        if data[0] == COMMAND_STATUS:
-            future.set_result(parse_status(dump_in(data, debug)))
+        def callback(char: BleakGATTCharacteristic, data: bytearray) -> None:
+            if data[0] == COMMAND_STATUS:
+                future.set_result(parse_status(dump_in(data, self.debug)))
 
-    await client.start_notify(CHAR_STATUS, callback)  # type: ignore
-    await client.write_gatt_char(CHAR_COMMAND, dump_out(bytearray([COMMAND_STATUS]), debug))
-    result = await asyncio.wait_for(future, timeout)
-    await client.stop_notify(CHAR_STATUS)
-    return result
+        await self.client.start_notify(CHAR_STATUS, callback)  # type: ignore
+        await self.client.write_gatt_char(
+            CHAR_COMMAND, dump_out(bytearray([COMMAND_STATUS]), self.debug)
+        )
+        result = await asyncio.wait_for(future, self.status_read_timeout)
+        await self.client.stop_notify(CHAR_STATUS)
+        return result
 
+    async def history(self) -> RadonEyeHistory:
+        loop = asyncio.get_running_loop()
+        future = loop.create_future()
+        pages: list[RadonEyeHistoryPage] = []
 
-async def retrieve_history_v2(
-    client: BleakClient,
-    timeout: float | None = None,
-    debug: bool = False,
-) -> RadonEyeHistory:
-    loop = asyncio.get_running_loop()
-    future = loop.create_future()
-    pages: list[RadonEyeHistoryPage] = []
+        def callback(char: BleakGATTCharacteristic, data: bytearray) -> None:
+            if data[0] == COMMAND_HISTORY:
+                page = parse_history_page(dump_in(data, self.debug))
+                pages.append(page)
+                if page["page_count"] == page["page_no"]:
+                    future.set_result(merge_history(pages))
 
-    def callback(char: BleakGATTCharacteristic, data: bytearray) -> None:
-        if data[0] == COMMAND_HISTORY:
-            page = parse_history_page(dump_in(data, debug))
-            pages.append(page)
-            if page["page_count"] == page["page_no"]:
-                future.set_result(merge_history(pages))
+        await self.client.start_notify(CHAR_HISTORY, callback)  # type: ignore
+        await self.client.write_gatt_char(
+            CHAR_COMMAND, dump_out(bytearray([COMMAND_HISTORY]), self.debug)
+        )
+        result = await asyncio.wait_for(future, self.history_read_timeout)
+        await self.client.stop_notify(CHAR_HISTORY)
+        return result
 
-    await client.start_notify(CHAR_HISTORY, callback)  # type: ignore
-    await client.write_gatt_char(CHAR_COMMAND, dump_out(bytearray([COMMAND_HISTORY]), debug))
-    result = await asyncio.wait_for(future, timeout)
-    await client.stop_notify(CHAR_HISTORY)
-    return result
+    async def beep(self) -> None:
+        # RadonEye app writes longer command, but it is actually enough to send one byte to beep
+        await self.client.write_gatt_char(
+            CHAR_COMMAND, dump_out(bytearray([COMMAND_BEEP]), self.debug)
+        )
+        # there is some delay needed before you can do next beep, otherwise it will be just one beep
+        await asyncio.sleep(BEEP_DELAY)
 
-
-async def trigger_beep_v2(client: BleakClient, debug: bool = False) -> None:
-    # RadonEye app writes longer command, but it is actually enough to send one byte to beep
-    await client.write_gatt_char(CHAR_COMMAND, dump_out(bytearray([COMMAND_BEEP]), debug))
-    # there is some delay needed before you can do next beep, otherwise it will be just one beep
-    await asyncio.sleep(BEEP_DELAY)
-
-
-async def setup_alarm_v2(
-    client: BleakClient,
-    enabled: bool,
-    level: float,  # value in bq/m3 or pci/l
-    unit: Literal["bq/m3", "pci/l"],
-    interval: int,  # in minutes, app supports 10 mins, 1 hour and 6 hours
-    debug: bool = False,
-) -> None:
-    command = (
-        bytearray([COMMAND_CONFIG, 0x11])
-        + encode_bool(enabled)
-        + encode_short(to_bq_m3(level) if unit == "pci/l" else int(level))
-        + encode_byte(math.ceil(interval / 10))
-    )
-    await client.write_gatt_char(CHAR_COMMAND, dump_out(command, debug))
-    await asyncio.sleep(ALARM_DELAY)  # doesn't work without delay
+    async def setup_alarm(
+        self,
+        enabled: bool,
+        level: float,
+        unit: RadonUnit,
+        interval: int,
+    ) -> None:
+        command = (
+            bytearray([COMMAND_CONFIG, 0x11])
+            + encode_bool(enabled)
+            + encode_short(to_bq_m3(level) if unit == "pci/l" else int(level))
+            + encode_byte(math.ceil(interval / 10))
+        )
+        await self.client.write_gatt_char(CHAR_COMMAND, dump_out(command, self.debug))
+        await asyncio.sleep(ALARM_DELAY)  # doesn't work without delay

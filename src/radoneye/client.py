@@ -1,35 +1,16 @@
 from __future__ import annotations
 
-from typing import Literal, Union
+from typing import Union
 
 from bleak import BleakClient
 from bleak.backends.device import BLEDevice
 
-from radoneye.interface_v1 import (
-    retrieve_history_v1,
-    retrieve_status_v1,
-    supports_v1,
-    trigger_beep_v1,
-)
-from radoneye.interface_v2 import (
-    retrieve_history_v2,
-    retrieve_status_v2,
-    setup_alarm_v2,
-    supports_v2,
-    trigger_beep_v2,
-)
-from radoneye.model import RadonEyeHistory, RadonEyeStatus
+from radoneye.interface_v1 import InterfaceV1
+from radoneye.interface_v2 import InterfaceV2
+from radoneye.model import RadonEyeHistory, RadonEyeInterface, RadonEyeStatus, RadonUnit
 
 
 class RadonEyeClient:
-    client: BleakClient
-
-    adapter: str | None
-    connect_timeout: float
-    status_read_timeout: float
-    history_read_timeout: float
-    debug: bool
-
     def __init__(
         self,
         address_or_ble_device: Union[BLEDevice, str],
@@ -40,10 +21,10 @@ class RadonEyeClient:
         debug: bool = False,
     ) -> None:
         self.client = BleakClient(address_or_ble_device, timout=connect_timeout, adapter=adapter)
-        self.adapter = adapter
-        self.connect_timeout = connect_timeout
+        self.interface: RadonEyeInterface | None = None
         self.status_read_timeout = status_read_timeout
         self.history_read_timeout = history_read_timeout
+        self.adapter = adapter
         self.debug = debug
 
     async def __aenter__(self):
@@ -64,48 +45,36 @@ class RadonEyeClient:
         return self.client.is_connected
 
     async def beep(self) -> None:
-        if supports_v1(self.client):
-            return await trigger_beep_v1(self.client, self.debug)
-        elif supports_v2(self.client):
-            return await trigger_beep_v2(self.client, self.debug)
-        else:
-            raise NotImplementedError("Not supported device")
+        return await self.__get_interface().beep()
 
     async def status(self) -> RadonEyeStatus:
-        if supports_v1(self.client):
-            return await retrieve_status_v1(self.client, self.status_read_timeout, self.debug)
-        elif supports_v2(self.client):
-            return await retrieve_status_v2(self.client, self.status_read_timeout, self.debug)
-        else:
-            raise NotImplementedError("Not supported device")
+        return await self.__get_interface().status()
 
     async def history(self) -> RadonEyeHistory:
-        if supports_v1(self.client):
-            return await retrieve_history_v1(
-                self.client, self.status_read_timeout, self.history_read_timeout, self.debug
-            )
-        elif supports_v2(self.client):
-            return await retrieve_history_v2(self.client, self.history_read_timeout, self.debug)
-        else:
-            raise NotImplementedError("Not supported device")
+        return await self.__get_interface().history()
 
     async def alarm(
         self,
         enabled: bool,
         level: float,  # value in bq/m3 or pci/l
-        unit: Literal["bq/m3", "pci/l"],
+        unit: RadonUnit,
         interval: int,  # in minutes, app supports 10 mins, 1 hour and 6 hours
     ) -> None:
-        if supports_v1(self.client):
-            raise NotImplementedError("Not implemented yet")
-        elif supports_v2(self.client):
-            await setup_alarm_v2(
-                self.client,
-                enabled=enabled,
-                level=level,
-                unit=unit,
-                interval=interval,
+        return await self.__get_interface().setup_alarm(enabled, level, unit, interval)
+
+    def __get_interface(self):
+        if self.interface:
+            return self.interface
+
+        for InterfaceClass in [InterfaceV2, InterfaceV1]:
+            interface = InterfaceClass(
+                client=self.client,
+                status_read_timeout=self.status_read_timeout,
+                history_read_timeout=self.history_read_timeout,
                 debug=self.debug,
             )
-        else:
-            raise NotImplementedError("Not supported device")
+            if interface.supports():
+                self.interface = interface
+                return interface
+
+        raise NotImplementedError("Not supported device")

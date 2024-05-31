@@ -18,12 +18,10 @@ from radoneye.interface_v1 import (
     COMMAND_STATUS_A6,
     COMMAND_STATUS_AF,
     COMMAND_STATUS_E8,
+    InterfaceV1,
     parse_history_data,
     parse_history_size,
     parse_status,
-    retrieve_history_v1,
-    retrieve_status_v1,
-    trigger_beep_v1,
 )
 
 # triggered by command 0x10
@@ -112,6 +110,11 @@ def bleak_client():
     return client
 
 
+@pytest.fixture
+def radoneye_interface(bleak_client: BleakClient):
+    return InterfaceV1(bleak_client, 1, 1, False)
+
+
 def test_parse_status():
     result = parse_status(
         bytearray(msg_50),
@@ -160,8 +163,8 @@ def test_parse_history():
 
 
 @pytest.mark.asyncio
-async def test_retrieve_status(bleak_client: Any):
-    result = await retrieve_status_v1(bleak_client, timeout=1)
+async def test_retrieve_status(bleak_client: Any, radoneye_interface: InterfaceV1):
+    result = await radoneye_interface.status()
 
     assert bleak_client.start_notify.mock_calls[0].args[0] == CHAR_STATUS
     assert bleak_client.stop_notify.mock_calls[0].args[0] == CHAR_STATUS
@@ -183,8 +186,8 @@ async def test_retrieve_status(bleak_client: Any):
 
 
 @pytest.mark.asyncio
-async def test_retrieve_history(bleak_client: Any):
-    result = await retrieve_history_v1(bleak_client, status_timeout=1, history_timeout=1)
+async def test_retrieve_history(bleak_client: Any, radoneye_interface: InterfaceV1):
+    result = await radoneye_interface.history()
 
     assert bleak_client.start_notify.mock_calls[0].args[0] == CHAR_STATUS
     assert bleak_client.stop_notify.mock_calls[0].args[0] == CHAR_STATUS
@@ -205,8 +208,8 @@ async def test_retrieve_history(bleak_client: Any):
 
 
 @pytest.mark.asyncio
-async def test_trigger_beep(bleak_client: Any):
-    await trigger_beep_v1(bleak_client)
+async def test_trigger_beep(bleak_client: Any, radoneye_interface: InterfaceV1):
+    await radoneye_interface.beep()
 
     assert bleak_client.write_gatt_char.mock_calls == [
         call(CHAR_COMMAND, bytearray([COMMAND_BEEP]))

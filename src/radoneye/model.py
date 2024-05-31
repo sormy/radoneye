@@ -1,4 +1,5 @@
-from typing import TypedDict
+from abc import abstractmethod
+from typing import Literal, TypedDict
 
 
 class RadonEyeStatus(TypedDict):
@@ -27,3 +28,34 @@ class RadonEyeStatus(TypedDict):
 class RadonEyeHistory(TypedDict):
     values_bq_m3: list[int]
     values_pci_l: list[float]
+
+
+RadonUnit = Literal["bq/m3", "pci/l"]
+
+
+class RadonEyeInterface:
+    @abstractmethod
+    def supports(self) -> bool:
+        raise NotImplementedError("Not supported method supports()")
+
+    @abstractmethod
+    async def status(self) -> RadonEyeStatus:
+        raise NotImplementedError("Not supported method status()")
+
+    @abstractmethod
+    async def history(self) -> RadonEyeHistory:
+        raise NotImplementedError("Not supported method history()")
+
+    @abstractmethod
+    async def beep(self) -> None:
+        raise NotImplementedError("Not supported method beep()")
+
+    @abstractmethod
+    async def setup_alarm(
+        self,
+        enabled: bool,
+        level: float,
+        unit: RadonUnit,
+        interval: int,
+    ) -> None:
+        raise NotImplementedError("Not supported method setup_alarm()")

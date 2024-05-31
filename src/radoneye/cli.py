@@ -6,6 +6,7 @@ from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
 from typing import Literal, NamedTuple
 
 from radoneye.client import RadonEyeClient
+from radoneye.model import RadonUnit
 from radoneye.scanner import RadonEyeScanner
 
 
@@ -100,7 +101,7 @@ class AlarmCommandArgs(NamedTuple):
     address: str
     enabled: bool
     level: float  # in bq/m3 or pci/l
-    unit: Literal["bq/m3", "pci/l"]
+    unit: RadonUnit
     interval: int  # mins
 
 
@@ -216,6 +217,7 @@ async def main():
     parser_alarm.set_defaults(func=cmd_alarm)
 
     args = parser.parse_args()
+
     await args.func(args)
 
 

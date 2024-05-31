@@ -51,6 +51,20 @@ brew install tox python@3.9 python@3.10 python@3.11 python@3.12
 tox
 ```
 
+## Debugging
+
+Enable Bleak logs:
+
+```sh
+BLEAK_LOGGING=1 radoneye ...
+```
+
+Enable debug mode (dump messages):
+
+```sh
+radoneye -d ...
+```
+
 ## Details
 
 ### Beep
