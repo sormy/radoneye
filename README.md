@@ -65,7 +65,7 @@ async def main():
 
             try:
                 print("Setting up alarm")
-                await client.alarm(enabled=True, level_pci_l=2.0, interval_mins=60)
+                await client.alarm(enabled=True, level=2.0, unit="pci/l", interval=60)
             except Exception:
                 print("Unable to set alarm due to error", file=stderr)
 
