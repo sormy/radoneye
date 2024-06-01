@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import math
+import os
 
 from bleak import BleakClient
 from bleak.backends.characteristic import BleakGATTCharacteristic
@@ -53,6 +54,9 @@ MSG_PREAMBLE_E8 = 0xE8  # history size
 
 BEEP_DELAY = 0.2  # sec
 ALARM_DELAY = 0.2  # sec
+
+# configurable to figure eact e value that is used by RadonEye
+RADONEYE_E = float(os.environ.get("RADONEYE_E", f"{math.e}"))
 
 
 def parse_status(
@@ -136,7 +140,7 @@ def parse_history_size(msg_e8: bytearray) -> int:
 
 def parse_history_data(msg_e9: bytearray, size: int) -> RadonEyeHistory:
     values = read_short_list(msg_e9, 0, size)
-    values_pci_l = [v / 37 / math.e for v in values]
+    values_pci_l = [v / 37 / RADONEYE_E for v in values]
     return {
         "values_bq_m3": [to_bq_m3(v) for v in values_pci_l],
         "values_pci_l": [round_pci_l(v) for v in values_pci_l],
