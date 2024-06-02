@@ -71,13 +71,6 @@ Turn off rounding:
 RADONEYE_ROUNDING_OFF=true radoneye ...
 ```
 
-Override e constant:
-
-```sh
-# default is 2.718281828459045
-RADONEYE_E=2.71828 radoneye ...
-```
-
 ## Details
 
 ### Beep
