@@ -8,7 +8,7 @@ from typing import cast
 RADONEYE_ROUNDING_OFF = os.environ.get("RADONEYE_ROUNDING_OFF", "false") == "true"
 
 
-def read_str_sz(buffer: bytearray, offset: int) -> str:
+def read_str_wl(buffer: bytearray, offset: int) -> str:
     # string length is encoded as first byte followed by string content with optional new line
     return buffer[(offset + 1) : (offset + 1 + buffer[offset])].decode()
 

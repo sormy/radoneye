@@ -28,7 +28,9 @@ Supported capabilites:
 | Read history               | YES       | YES       |
 | Trigger beep               | YES       | YES       |
 | Read alarm settings        | YES       | YES       |
-| Set alarm settings         | YES       | YES       |
+| Write alarm settings       | YES       | YES       |
+| Read unit settting         | YES       | YES       |
+| Write unit settting        | NO        | YES       |
 
 ## Usage (API)
 
@@ -65,9 +67,15 @@ async def main():
 
             try:
                 print("Setting up alarm")
-                await client.alarm(enabled=True, level=2.0, unit="pci/l", interval=60)
+                await client.set_alarm(enabled=True, level=2.0, unit="pci/l", interval=60)
             except Exception:
                 print("Unable to set alarm due to error", file=stderr)
+
+            try:
+                print("Setting up unit")
+                await client.set_unit("pci/l")
+            except Exception:
+                print("Unable to set unit due to error", file=stderr)
 
 
 if __name__ == "__main__":
@@ -92,22 +100,29 @@ Beeping on 70C12E8A-27F6-3AEC-0BAD-95FA94BF17A9
 
 $ radoneye status --help
 $ radoneye status 70C12E8A-27F6-3AEC-0BAD-95FA94BF17A9
+alarm_enabled = 1
+alarm_interval_minutes = 60
+alarm_level_bq_m3 = 74
+alarm_level_pci_l = 2.0
 counts_current = 0
 counts_previous = 1
 counts_str = 0/1
-day_avg_bq_m3 = 16
-day_avg_pci_l = 0.43
-latest_bq_m3 = 5
-latest_pci_l = 0.14
+day_avg_bq_m3 = 14
+day_avg_pci_l = 0.38
+display_unit = pci/l
+latest_bq_m3 = 3
+latest_pci_l = 0.08
 model = RD200N
-month_avg_bq_m3 = 0
-month_avg_pci_l = 0.0
-peak_bq_m3 = 32
-peak_pci_l = 0.86
-serial = RU22201030383
-uptime_minutes = 3495
-uptime_str = 2d10h1
+month_avg_bq_m3 = 20
+month_avg_pci_l = 0.54
+peak_bq_m3 = 79
+peak_pci_l = 2.14
+serial = RU22204180050
+uptime_minutes = 223692
+uptime_str = 155d08h12m
+version = V2.0.2
 
+$ radoneye history --help
 $ radoneye history 70C12E8A-27F6-3AEC-0BAD-95FA94BF17A9
 #	Bq/m3	pCi/L
 1	2	0.05
@@ -121,6 +136,14 @@ $ radoneye history 70C12E8A-27F6-3AEC-0BAD-95FA94BF17A9
 9	10	0.27
 10	10	0.27
 ...
+
+$ radoneye status unit --help
+$ radoneye unit 70C12E8A-27F6-3AEC-0BAD-95FA94BF17A9
+Current display unit is pci/l
+$ radoneye unit 70C12E8A-27F6-3AEC-0BAD-95FA94BF17A9 --unit bq/m3
+Updating display unit to bq/m3
+$ radoneye unit 70C12E8A-27F6-3AEC-0BAD-95FA94BF17A9
+Current display unit is bq/m3
 ```
 
 NOTE: On macOS bluetooth addresses are obfuscated to UUIDs.

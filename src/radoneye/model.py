@@ -1,6 +1,8 @@
 from abc import abstractmethod
 from typing import Literal, TypedDict
 
+RadonUnit = Literal["bq/m3", "pci/l"]
+
 
 class RadonEyeStatus(TypedDict):
     serial: str
@@ -19,6 +21,7 @@ class RadonEyeStatus(TypedDict):
     counts_str: str
     uptime_minutes: int
     uptime_str: str
+    display_unit: RadonUnit
     alarm_enabled: int
     alarm_level_bq_m3: float
     alarm_level_pci_l: float
@@ -28,9 +31,6 @@ class RadonEyeStatus(TypedDict):
 class RadonEyeHistory(TypedDict):
     values_bq_m3: list[float]
     values_pci_l: list[float]
-
-
-RadonUnit = Literal["bq/m3", "pci/l"]
 
 
 class RadonEyeInterface:
@@ -51,11 +51,15 @@ class RadonEyeInterface:
         raise NotImplementedError("Not supported method beep()")
 
     @abstractmethod
-    async def alarm(
+    async def set_alarm(
         self,
         enabled: bool,
         level: float,
         unit: RadonUnit,
         interval: int,
     ) -> None:
-        raise NotImplementedError("Not supported method setup_alarm()")
+        raise NotImplementedError("Not supported method set_alarm()")
+
+    @abstractmethod
+    async def set_unit(self, unit: RadonUnit) -> None:
+        raise NotImplementedError("Not supported method set_unit()")

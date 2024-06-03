@@ -34,10 +34,10 @@ CHAR_HISTORY = "00001526-0000-1000-8000-00805f9b34fb"
 COMMAND_STATUS = 0x40
 COMMAND_HISTORY = 0x41
 COMMAND_BEEP = 0xA1
-COMMAND_ALARM = 0xAA
+COMMAND_SET_ALARM = 0xAA
+COMMAND_SET_UNIT = 0xA2
 
-BEEP_DELAY = 0.2  # sec
-ALARM_DELAY = 0.2  # sec
+INVOKE_DELAY = 0.2  # sec
 
 
 class RadonEyeHistoryPage(TypedDict):
@@ -57,6 +57,8 @@ def parse_status(data: bytearray) -> RadonEyeStatus:
     model = read_str(data, 16, 6)
 
     version = read_str(data, 22, 6)
+
+    display_unit = "bq/m3" if read_bool(data, 28) else "pci/l"
 
     alarm_enabled = read_bool(data, 29)
     alarm_level_bq_m3 = read_short(data, 30)
@@ -100,6 +102,7 @@ def parse_status(data: bytearray) -> RadonEyeStatus:
         "counts_str": counts_str,
         "uptime_minutes": uptime_minutes,
         "uptime_str": uptime_str,
+        "display_unit": display_unit,
         "alarm_enabled": 1 if alarm_enabled else 0,
         "alarm_level_bq_m3": alarm_level_bq_m3,
         "alarm_level_pci_l": alarm_level_pci_l,
@@ -197,9 +200,9 @@ class InterfaceV2(RadonEyeInterface):
             CHAR_COMMAND, dump_out(bytearray([COMMAND_BEEP]), self.debug)
         )
         # there is some delay needed before you can do next beep, otherwise it will be just one beep
-        await asyncio.sleep(BEEP_DELAY)
+        await asyncio.sleep(INVOKE_DELAY)
 
-    async def alarm(
+    async def set_alarm(
         self,
         enabled: bool,
         level: float,
@@ -207,10 +210,17 @@ class InterfaceV2(RadonEyeInterface):
         interval: int,
     ) -> None:
         command = (
-            bytearray([COMMAND_ALARM, 0x11])
+            bytearray([COMMAND_SET_ALARM, 0x11])
             + encode_bool(enabled)
             + encode_short(to_bq_m3(level) if unit == "pci/l" else level)
             + encode_byte(math.ceil(interval / 10))
         )
         await self.client.write_gatt_char(CHAR_COMMAND, dump_out(command, self.debug))
-        await asyncio.sleep(ALARM_DELAY)  # doesn't work without delay
+        await asyncio.sleep(INVOKE_DELAY)  # doesn't work without delay
+
+    async def set_unit(self, unit: RadonUnit) -> None:
+        command = bytearray([COMMAND_SET_UNIT, 0x11]) + encode_bool(
+            False if unit == "pci/l" else True
+        )
+        await self.client.write_gatt_char(CHAR_COMMAND, dump_out(command, self.debug))
+        await asyncio.sleep(INVOKE_DELAY)  # doesn't work without delay

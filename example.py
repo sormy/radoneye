@@ -28,9 +28,15 @@ async def main():
 
             try:
                 print("Setting up alarm")
-                await client.alarm(enabled=True, level=2.0, unit="pci/l", interval=60)
+                await client.set_alarm(enabled=True, level=2.0, unit="pci/l", interval=60)
             except Exception:
                 print("Unable to set alarm due to error", file=stderr)
+
+            try:
+                print("Setting up unit")
+                await client.set_unit("pci/l")
+            except Exception:
+                print("Unable to set unit due to error", file=stderr)
 
 
 if __name__ == "__main__":

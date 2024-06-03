@@ -20,7 +20,7 @@ from radoneye.util import (
     read_int,
     read_short,
     read_short_list,
-    read_str_sz,
+    read_str_wl,
     round_pci_l,
     to_bq_m3,
     to_pci_l,
@@ -40,7 +40,7 @@ COMMAND_STATUS_51 = 0x51  # requests message 51
 COMMAND_STATUS_E8 = 0xE8  # requests message E8
 COMMAND_HISTORY = 0xE9  # triggers history messages
 COMMAND_BEEP = 0xA1  # triggers beep
-COMMAND_ALARM = 0xAA  # requests message AC, updates alarm settings
+COMMAND_SET_ALARM = 0xAA  # requests message AC, updates alarm settings
 
 MSG_PREAMBLE_50 = 0x50  # latest/daily/monthly radon, raw particle counts
 MSG_PREAMBLE_51 = 0x51  # uptime/peak radon
@@ -51,8 +51,7 @@ MSG_PREAMBLE_AC = 0xAC  # alarm settings
 MSG_PREAMBLE_AF = 0xAF  # software version
 MSG_PREAMBLE_E8 = 0xE8  # history size
 
-BEEP_DELAY = 0.2  # sec
-ALARM_DELAY = 0.2  # sec
+INVOKE_DELAY = 0.2  # sec
 
 
 def parse_status(
@@ -67,14 +66,14 @@ def parse_status(
     # Most messages start with command code followed by byte representing length of data inside buffer
     # buffer has at most 20 bytes (including command code), unused buffer part can contain "trash".
 
-    serial_part1 = read_str_sz(msg_a6, 1)  # series?
-    serial_part2 = read_str_sz(msg_a4, 1)[2:8]  # manufacturing date (YYMMDD)?
-    serial_part3 = read_str_sz(msg_a4, 1)[-4:]  # serial within manufacturing date?
+    serial_part1 = read_str_wl(msg_a6, 1)  # series?
+    serial_part2 = read_str_wl(msg_a4, 1)[2:8]  # manufacturing date (YYMMDD)?
+    serial_part3 = read_str_wl(msg_a4, 1)[-4:]  # serial within manufacturing date?
     serial = serial_part1 + serial_part2 + serial_part3  # example: {RU2}{201202}{0159}
 
-    model = read_str_sz(msg_a8, 2)
+    model = read_str_wl(msg_a8, 2)
 
-    version = read_str_sz(msg_af, 1).rstrip()  # value has useless trailing new line
+    version = read_str_wl(msg_af, 1).rstrip()  # value has useless trailing new line
 
     latest_value = read_float(msg_50, 2)
     latest_pci_l = round_pci_l(latest_value)
@@ -98,6 +97,8 @@ def parse_status(
     peak_value = read_float(msg_51, 12)
     peak_pci_l = round_pci_l(peak_value)
     peak_bq_m3 = to_bq_m3(peak_value)
+
+    display_unit = "bq/m3" if read_bool(msg_ac, 2) else "pci/l"
 
     alarm_enabled = read_bool(msg_ac, 3)
     alarm_level_value = read_float(msg_ac, 4)
@@ -123,6 +124,7 @@ def parse_status(
         "counts_str": counts_str,
         "uptime_minutes": uptime_minutes,
         "uptime_str": uptime_str,
+        "display_unit": display_unit,
         "alarm_enabled": alarm_enabled,
         "alarm_level_bq_m3": alarm_level_bq_m3,
         "alarm_level_pci_l": alarm_level_pci_l,
@@ -268,9 +270,9 @@ class InterfaceV1(RadonEyeInterface):
             CHAR_COMMAND, dump_out(bytearray([COMMAND_BEEP]), self.debug)
         )
         # there is some delay needed before you can do next beep, otherwise it will be just one beep
-        await asyncio.sleep(BEEP_DELAY)
+        await asyncio.sleep(INVOKE_DELAY)
 
-    async def alarm(
+    async def set_alarm(
         self,
         enabled: bool,
         level: float,
@@ -278,10 +280,10 @@ class InterfaceV1(RadonEyeInterface):
         interval: int,
     ) -> None:
         command = (
-            bytearray([COMMAND_ALARM, 0x11])
+            bytearray([COMMAND_SET_ALARM, 0x11])
             + encode_bool(enabled)
             + encode_float(level if unit == "pci/l" else to_pci_l(level))
             + encode_byte(math.ceil(interval / 10))
         )
         await self.client.write_gatt_char(CHAR_COMMAND, dump_out(command, self.debug))
-        await asyncio.sleep(ALARM_DELAY)  # doesn't work without delay
+        await asyncio.sleep(INVOKE_DELAY)  # doesn't work without delay

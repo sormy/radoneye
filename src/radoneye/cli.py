@@ -126,12 +126,42 @@ async def cmd_alarm(args: AlarmCommandArgs):
                 ]
             )
         )
-        await client.alarm(
+        await client.set_alarm(
             enabled=args.enabled,
             level=args.level,
             unit=args.unit,
             interval=args.interval,
         )
+
+
+class UnitCommandArgs(NamedTuple):
+    adapter: str | None
+    debug: bool
+    connect_timeout: int
+    read_timeout: int
+    output: Literal["text", "json"]
+    address: str
+    unit: RadonUnit | None
+
+
+async def cmd_unit(args: UnitCommandArgs):
+    async with RadonEyeClient(
+        args.address,
+        adapter=args.adapter,
+        connect_timeout=args.connect_timeout,
+        status_read_timeout=args.read_timeout,
+        debug=args.debug,
+    ) as client:
+        if args.unit is None:
+            status = await client.status()
+            if args.output == "text":
+                print(f"Current display unit is {status['display_unit']}")
+            else:
+                print(json.dumps(status["display_unit"]))
+        else:
+            if args.output == "text":
+                print(f"Updating display unit to {args.unit}")
+            await client.set_unit(args.unit)
 
 
 async def main():
@@ -215,6 +245,20 @@ async def main():
         "--interval", type=int, help="alarm interval (in minutes)", default=60
     )
     parser_alarm.set_defaults(func=cmd_alarm)
+
+    parser_unit = subparsers.add_parser(
+        "unit",
+        help="get/set display unit (bq/m3 or pci/l)",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    parser_unit.add_argument("address", help="device address")
+    parser_unit.add_argument("--connect-timeout", type=int, help="connect timeout", default=10)
+    parser_unit.add_argument("--read-timeout", type=int, help="read timeout", default=5)
+    parser_unit.add_argument("--unit", choices=["bq/m3", "pci/l"], help="set new display unit")
+    parser_unit.add_argument(
+        "--output", choices=["json", "text"], help="output format", default="text"
+    )
+    parser_unit.set_defaults(func=cmd_unit)
 
     args = parser.parse_args()
 
