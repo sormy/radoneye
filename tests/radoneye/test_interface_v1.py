@@ -130,7 +130,7 @@ def test_parse_status():
         {
             "serial": "RU22012020159",
             "model": "RD200",
-            "version": "V1.2.4",
+            "firmware_version": "V1.2.4",
             "latest_bq_m3": 21,
             "latest_pci_l": 0.58,
             "day_avg_bq_m3": 54,

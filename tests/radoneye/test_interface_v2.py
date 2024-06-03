@@ -105,7 +105,7 @@ def test_parse_status():
         {
             "serial": "RU22201030383",
             "model": "RD200N",
-            "version": "V2.0.2",
+            "firmware_version": "V2.0.2",
             "latest_bq_m3": 10,
             "latest_pci_l": 0.27,
             "day_avg_bq_m3": 8,

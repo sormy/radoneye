@@ -56,7 +56,7 @@ def parse_status(data: bytearray) -> RadonEyeStatus:
 
     model = read_str(data, 16, 6)
 
-    version = read_str(data, 22, 6)
+    firmware_version = read_str(data, 22, 6)
 
     display_unit = "bq/m3" if read_bool(data, 28) else "pci/l"
 
@@ -88,7 +88,7 @@ def parse_status(data: bytearray) -> RadonEyeStatus:
     return {
         "serial": serial,
         "model": model,
-        "version": version,
+        "firmware_version": firmware_version,
         "latest_bq_m3": latest_bq_m3,
         "latest_pci_l": latest_pci_l,
         "day_avg_bq_m3": day_avg_bq_m3,

@@ -5,7 +5,7 @@ Provides simple and convinient Python API to communicate with RadonEye bluetooth
 Built as an alternative to half done similar projects where either 1 or 2 version is supported, not
 all status properties are decoded, no history support, no beep and alarm support etc.
 
-Supported devices:
+Device support list:
 
 | Name   | Version | Supported | Tested by                  |
 | ------ | ------- | --------- | -------------------------- |
@@ -13,7 +13,7 @@ Supported devices:
 | RD200N | 2       | YES       | Tested by author           |
 | RD200P | 2       | YES?      | Pending testing            |
 
-Supported capabilites:
+Capability support list:
 
 | Name                       | Version 1 | Version 2 |
 | -------------------------- | --------- | --------- |
@@ -31,6 +31,7 @@ Supported capabilites:
 | Write alarm settings       | YES       | YES       |
 | Read unit settting         | YES       | YES       |
 | Write unit settting        | NO        | YES       |
+| Erase all data             | NO        | NO        |
 
 ## Usage (API)
 
@@ -120,7 +121,7 @@ peak_pci_l = 2.14
 serial = RU22204180050
 uptime_minutes = 223692
 uptime_str = 155d08h12m
-version = V2.0.2
+firmware_version = V2.0.2
 
 $ radoneye history --help
 $ radoneye history 70C12E8A-27F6-3AEC-0BAD-95FA94BF17A9

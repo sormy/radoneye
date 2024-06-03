@@ -73,7 +73,7 @@ def parse_status(
 
     model = read_str_wl(msg_a8, 2)
 
-    version = read_str_wl(msg_af, 1).rstrip()  # value has useless trailing new line
+    firmware_version = read_str_wl(msg_af, 1).rstrip()  # value has useless trailing new line
 
     latest_value = read_float(msg_50, 2)
     latest_pci_l = round_pci_l(latest_value)
@@ -110,7 +110,7 @@ def parse_status(
     return {
         "serial": serial,
         "model": model,
-        "version": version,
+        "firmware_version": firmware_version,
         "latest_bq_m3": latest_bq_m3,
         "latest_pci_l": latest_pci_l,
         "day_avg_bq_m3": day_avg_bq_m3,

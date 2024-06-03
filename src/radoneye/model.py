@@ -7,7 +7,7 @@ RadonUnit = Literal["bq/m3", "pci/l"]
 class RadonEyeStatus(TypedDict):
     serial: str
     model: str
-    version: str
+    firmware_version: str
     latest_bq_m3: float
     latest_pci_l: float
     day_avg_bq_m3: float
