@@ -56,7 +56,11 @@ Format:
 -   0x2B: uptime in minutes, uint16
 -   0x2D: unknown, 6 bytes
 -   0x33: peak radon level in bq/m3, uint16
--   0x35: unknown, 15 bytes
+-   0x35: unknown, 4 bytes
+-   0x39: number of data points in history, uint16
+-   0x3B: unknown, 9 bytes
+
+15-4-2
 
 ## History request (0x41) (OUTGOING)
 
