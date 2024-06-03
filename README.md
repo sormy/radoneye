@@ -30,7 +30,7 @@ Capability support list:
 | Read alarm settings        | YES       | YES       |
 | Write alarm settings       | YES       | YES       |
 | Read unit settting         | YES       | YES       |
-| Write unit settting        | NO        | YES       |
+| Write unit settting        | YES       | YES       |
 | Erase all data             | NO        | NO        |
 
 ## Usage (API)

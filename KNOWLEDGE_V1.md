@@ -302,9 +302,15 @@ Format:
 -   0x03: alarm level in pci/l: float32
 -   0x07: alarm interval in 10min increments: uint8 (1 - 10 mins, 6 - 1 hour, 36 - 6 hours)
 
-## Set unit request (0x??) (OUTGOING)
+## Set unit request (0xA2) (OUTGOING)
 
-???
+Example: `A2 11 01`
+
+Format:
+
+-   0x00: code 0xA2
+-   0x01: reserved 0x11?
+-   0x02: display unit: uint8 (0x00 - pci/l, 0x01 - bq/m3)
 
 ## Settings response (0xAC) (INCOMING)
 

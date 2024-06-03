@@ -161,6 +161,8 @@ async def cmd_unit(args: UnitCommandArgs):
         else:
             if args.output == "text":
                 print(f"Updating display unit to {args.unit}")
+            else:
+                print(json.dumps(args.unit))
             await client.set_unit(args.unit)
 
 

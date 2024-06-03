@@ -280,3 +280,21 @@ async def test_set_alarm_level_4(bleak_client: Any, radoneye_interface: Interfac
     assert bleak_client.write_gatt_char.mock_calls == [
         call(CHAR_COMMAND, bytearray.fromhex("aa 11 01 00 00 80 40 06"))
     ]
+
+
+@pytest.mark.asyncio
+async def test_set_unit_bq_m3(bleak_client: Any, radoneye_interface: InterfaceV1):
+    await radoneye_interface.set_unit("pci/l")
+
+    assert bleak_client.write_gatt_char.mock_calls == [
+        call(CHAR_COMMAND, bytearray.fromhex("a2 11 00"))
+    ]
+
+
+@pytest.mark.asyncio
+async def test_set_unit_pci_l(bleak_client: Any, radoneye_interface: InterfaceV1):
+    await radoneye_interface.set_unit("bq/m3")
+
+    assert bleak_client.write_gatt_char.mock_calls == [
+        call(CHAR_COMMAND, bytearray.fromhex("a2 11 01"))
+    ]

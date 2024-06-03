@@ -41,6 +41,7 @@ COMMAND_STATUS_E8 = 0xE8  # requests message E8
 COMMAND_HISTORY = 0xE9  # triggers history messages
 COMMAND_BEEP = 0xA1  # triggers beep
 COMMAND_SET_ALARM = 0xAA  # requests message AC, updates alarm settings
+COMMAND_SET_UNIT = 0xA2  # requests message AC, updates unit settings
 
 MSG_PREAMBLE_50 = 0x50  # latest/daily/monthly radon, raw particle counts
 MSG_PREAMBLE_51 = 0x51  # uptime/peak radon
@@ -284,6 +285,13 @@ class InterfaceV1(RadonEyeInterface):
             + encode_bool(enabled)
             + encode_float(level if unit == "pci/l" else to_pci_l(level))
             + encode_byte(math.ceil(interval / 10))
+        )
+        await self.client.write_gatt_char(CHAR_COMMAND, dump_out(command, self.debug))
+        await asyncio.sleep(INVOKE_DELAY)  # doesn't work without delay
+
+    async def set_unit(self, unit: RadonUnit) -> None:
+        command = bytearray([COMMAND_SET_UNIT, 0x11]) + encode_bool(
+            False if unit == "pci/l" else True
         )
         await self.client.write_gatt_char(CHAR_COMMAND, dump_out(command, self.debug))
         await asyncio.sleep(INVOKE_DELAY)  # doesn't work without delay
