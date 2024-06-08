@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import json
 import math
 import os
 from struct import pack, unpack_from
-from typing import cast
+from typing import Any, Literal, cast
+
+from radoneye.model import RadonUnit
 
 RADONEYE_ROUNDING_OFF = os.environ.get("RADONEYE_ROUNDING_OFF", "false") == "true"
 
@@ -66,12 +69,22 @@ def round_pci_l(value_pci_l: float) -> float:
 
 def to_bq_m3(value_pci_l: float) -> float:
     if RADONEYE_ROUNDING_OFF:
-        return value_pci_l * 37
-    return round(value_pci_l * 37)
+        return float(value_pci_l * 37)
+    return float(round(value_pci_l * 37))
 
 
 def to_pci_l(value_bq_m3: float) -> float:
     return round_pci_l(value_bq_m3 / 37)
+
+
+def convert_radon_value(value: float, from_unit: RadonUnit, to_unit: RadonUnit) -> float:
+    if from_unit == to_unit:
+        return value
+    if from_unit == "bq/m3" and to_unit == "pci/l":
+        return to_pci_l(value)
+    if from_unit == "pci/l" and to_unit == "bq/m3":
+        return to_bq_m3(value)
+    raise ValueError(f"Unexpected conversion schema: {from_unit} -> {to_unit}")
 
 
 def format_uptime(uptime_minutes: int) -> str:
@@ -83,3 +96,24 @@ def format_uptime(uptime_minutes: int) -> str:
 
 def format_counts(counts_current: int, counts_previous: int) -> str:
     return f"{counts_current}/{counts_previous}"
+
+
+def serialize_value_text(v: Any):
+    if isinstance(v, bool):
+        return "yes" if v else "no"
+    return v
+
+
+def serialize_object(obj: Any, output: Literal["text", "json"]):
+    if output == "text":
+        if isinstance(obj, dict):  # type: ignore
+            return "\n".join(
+                [
+                    f"{key}\t{serialize_value_text(obj.get(key))}"  # type: ignore
+                    for key in sorted(obj.keys())  # type: ignore
+                ]
+            )
+        else:
+            return f"{serialize_value_text(obj)}"
+    else:
+        return json.dumps(obj, separators=(",", ":"))

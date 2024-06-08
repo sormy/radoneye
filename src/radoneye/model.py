@@ -3,6 +3,8 @@ from typing import Literal, TypedDict
 
 RadonUnit = Literal["bq/m3", "pci/l"]
 
+OutputType = Literal["text", "json"]
+
 
 class RadonEyeStatus(TypedDict):
     serial: str

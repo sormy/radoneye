@@ -103,7 +103,7 @@ def parse_status(data: bytearray) -> RadonEyeStatus:
         "uptime_minutes": uptime_minutes,
         "uptime_str": uptime_str,
         "display_unit": display_unit,
-        "alarm_enabled": 1 if alarm_enabled else 0,
+        "alarm_enabled": alarm_enabled,
         "alarm_level_bq_m3": alarm_level_bq_m3,
         "alarm_level_pci_l": alarm_level_pci_l,
         "alarm_interval_minutes": alarm_interval_minutes,

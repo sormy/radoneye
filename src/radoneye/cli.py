@@ -1,27 +1,39 @@
 from __future__ import annotations
 
 import asyncio
-import json
+import sys
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
-from typing import Literal, NamedTuple
+from typing import Literal, NamedTuple, TypedDict
 
 from radoneye.client import RadonEyeClient
-from radoneye.model import RadonUnit
+from radoneye.model import OutputType, RadonUnit
 from radoneye.scanner import RadonEyeScanner
+from radoneye.util import convert_radon_value, serialize_object
+
+
+class RadonEyeAlarmStatus(TypedDict):
+    alarm_enabled: int
+    alarm_level_bq_m3: float
+    alarm_level_pci_l: float
+    alarm_interval_minutes: int
 
 
 class ListCommandArgs(NamedTuple):
     adapter: str | None
     timeout: int
-    output: Literal["text", "json"]
+    output: OutputType
 
 
 async def cmd_list(args: ListCommandArgs):
-    for dev in await RadonEyeScanner.discover(adapter=args.adapter, timeout=args.timeout):
-        if args.output == "text":
-            print(f"{dev.address}\t{dev.name}")
-        else:
-            print(json.dumps({"address": dev.address, "name": dev.name}, separators=(",", ":")))
+    devs = [
+        {"address": dev.address, "name": dev.name}
+        for dev in await RadonEyeScanner.discover(adapter=args.adapter, timeout=args.timeout)
+    ]
+    if args.output == "text":
+        for dev in devs:
+            print(f"{dev['address']}\t{dev['name']}")
+    else:
+        print(serialize_object(devs, "json"))
 
 
 class BeepCommandArgs(NamedTuple):
@@ -38,7 +50,7 @@ async def cmd_beep(args: BeepCommandArgs):
         connect_timeout=args.connect_timeout,
         debug=args.debug,
     ) as client:
-        print(f"Beeping on {args.address}")
+        print("beep")
         await client.beep()
 
 
@@ -47,7 +59,7 @@ class StatusCommandArgs(NamedTuple):
     debug: bool
     connect_timeout: int
     read_timeout: int
-    output: Literal["text", "json"]
+    output: OutputType
     address: str
 
 
@@ -60,11 +72,7 @@ async def cmd_status(args: StatusCommandArgs):
         debug=args.debug,
     ) as client:
         status = await client.status()
-        if args.output == "text":
-            for key in sorted(status.keys()):
-                print(f"{key} = {status.get(key)}")
-        else:
-            print(json.dumps(status, separators=(",", ":")))
+        print(serialize_object(status, args.output))
 
 
 class HistoryCommandArgs(NamedTuple):
@@ -72,7 +80,7 @@ class HistoryCommandArgs(NamedTuple):
     debug: bool
     connect_timeout: int
     read_timeout: int
-    output: Literal["text", "json"]
+    output: OutputType
     address: str
 
 
@@ -91,18 +99,20 @@ async def cmd_history(args: HistoryCommandArgs):
                 value_pci_l = history["values_pci_l"][index]
                 print(f"{index + 1}\t{value_bq_m3}\t{value_pci_l}")
         else:
-            print(json.dumps(history, separators=(",", ":")))
+            print(serialize_object(history, "json"))
 
 
 class AlarmCommandArgs(NamedTuple):
     adapter: str | None
     debug: bool
     connect_timeout: int
+    read_timeout: int
+    output: OutputType
     address: str
-    enabled: bool
-    level: float  # in bq/m3 or pci/l
-    unit: RadonUnit
-    interval: int  # mins
+    status: Literal["on", "off"] | None
+    level: float | None  # in bq/m3 or pci/l
+    unit: RadonUnit | None
+    interval: int | None  # mins
 
 
 async def cmd_alarm(args: AlarmCommandArgs):
@@ -110,28 +120,75 @@ async def cmd_alarm(args: AlarmCommandArgs):
         args.address,
         adapter=args.adapter,
         connect_timeout=args.connect_timeout,
+        status_read_timeout=args.read_timeout,
         debug=args.debug,
     ) as client:
-        print(
-            "Setup alarm: "
-            + ", ".join(
-                [
-                    line
-                    for line in [
-                        "enabled" if args.enabled else "disabled",
-                        f"level = {args.level} {args.unit}" if args.enabled else "",
-                        f"interval = {args.interval} mins" if args.enabled else "",
-                    ]
-                    if line != ""
-                ]
+        if args.status is None and args.level is None and args.interval is None:
+            status = await client.status()
+
+            alarm_status = {
+                "alarm_enabled": status["alarm_enabled"],
+                "alarm_level_bq_m3": status["alarm_level_bq_m3"],
+                "alarm_level_pci_l": status["alarm_level_pci_l"],
+                "alarm_interval_minutes": status["alarm_interval_minutes"],
+            }
+
+            print(serialize_object(alarm_status, args.output))
+        elif (
+            args.status is not None
+            and args.level is not None
+            and args.unit is not None
+            and args.interval is not None
+        ):
+            new_alarm_status: RadonEyeAlarmStatus = {
+                "alarm_enabled": args.status == "on",
+                "alarm_level_bq_m3": convert_radon_value(args.level, args.unit, "bq/m3"),
+                "alarm_level_pci_l": convert_radon_value(args.level, args.unit, "pci/l"),
+                "alarm_interval_minutes": args.interval,
+            }
+
+            await client.set_alarm(
+                enabled=args.status == "on",
+                level=args.level,
+                unit=args.unit,
+                interval=args.interval,
             )
-        )
-        await client.set_alarm(
-            enabled=args.enabled,
-            level=args.level,
-            unit=args.unit,
-            interval=args.interval,
-        )
+
+            print(serialize_object(new_alarm_status, args.output))
+        else:
+            status = await client.status()
+
+            new_enabled = (
+                args.status == "on" if args.status is not None else bool(status["alarm_enabled"])
+            )
+
+            if args.level is not None:
+                new_unit = args.unit or status["display_unit"]
+                new_level = args.level
+            elif status["display_unit"] == "pci/l":
+                new_level = status["alarm_level_pci_l"]
+                new_unit = "pci/l"
+            else:
+                new_level = status["alarm_level_bq_m3"]
+                new_unit = "bq/m3"
+
+            new_interval = args.interval or status["alarm_interval_minutes"]
+
+            await client.set_alarm(
+                enabled=new_enabled,
+                level=new_level,
+                unit=new_unit,
+                interval=new_interval,
+            )
+
+            new_alarm_status: RadonEyeAlarmStatus = {
+                "alarm_enabled": new_enabled,
+                "alarm_level_bq_m3": convert_radon_value(new_level, new_unit, "bq/m3"),
+                "alarm_level_pci_l": convert_radon_value(new_level, new_unit, "pci/l"),
+                "alarm_interval_minutes": new_interval,
+            }
+
+            print(serialize_object(new_alarm_status, args.output))
 
 
 class UnitCommandArgs(NamedTuple):
@@ -139,7 +196,7 @@ class UnitCommandArgs(NamedTuple):
     debug: bool
     connect_timeout: int
     read_timeout: int
-    output: Literal["text", "json"]
+    output: OutputType
     address: str
     unit: RadonUnit | None
 
@@ -154,19 +211,13 @@ async def cmd_unit(args: UnitCommandArgs):
     ) as client:
         if args.unit is None:
             status = await client.status()
-            if args.output == "text":
-                print(f"Current display unit is {status['display_unit']}")
-            else:
-                print(json.dumps(status["display_unit"]))
+            print(serialize_object(status["display_unit"], args.output))
         else:
-            if args.output == "text":
-                print(f"Updating display unit to {args.unit}")
-            else:
-                print(json.dumps(args.unit))
             await client.set_unit(args.unit)
+            print(serialize_object(args.unit, args.output))
 
 
-async def main():
+async def main(argv: list[str]):
     parser = ArgumentParser(
         description="Ecosense RadonEye command line interface (currently supports RD200 v1/v2)",
         formatter_class=ArgumentDefaultsHelpFormatter,
@@ -228,23 +279,18 @@ async def main():
 
     parser_alarm = subparsers.add_parser(
         "alarm",
-        help="set alarm configuration",
+        help="get/set alarm configuration",
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
     parser_alarm.add_argument("address", help="device address")
     parser_alarm.add_argument("--connect-timeout", type=int, help="connect timeout", default=10)
-    parser_alarm.add_argument("--enabled", action="store_true", help="enable alarm")
+    parser_alarm.add_argument("--read-timeout", type=int, help="read timeout", default=5)
+    parser_alarm.add_argument("--status", choices=["on", "off"], help="alarm status")
+    parser_alarm.add_argument("--level", type=float, help="alarm level in bq/m3 or pci/l")
+    parser_alarm.add_argument("--unit", choices=["bq/m3", "pci/l"], help="alarm level unit")
+    parser_alarm.add_argument("--interval", type=int, help="alarm interval (in minutes)")
     parser_alarm.add_argument(
-        "--disabled", dest="enabled", action="store_false", help="disable alarm"
-    )
-    parser_alarm.add_argument(
-        "--level", type=float, help="alarm level in bq/m3 or pci/l", default=2.0
-    )
-    parser_alarm.add_argument(
-        "--unit", choices=["bq/m3", "pci/l"], help="alarm level unit", default="pci/l"
-    )
-    parser_alarm.add_argument(
-        "--interval", type=int, help="alarm interval (in minutes)", default=60
+        "--output", choices=["json", "text"], help="output format", default="text"
     )
     parser_alarm.set_defaults(func=cmd_alarm)
 
@@ -262,10 +308,10 @@ async def main():
     )
     parser_unit.set_defaults(func=cmd_unit)
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv[1:])
 
     await args.func(args)
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(main(sys.argv))
