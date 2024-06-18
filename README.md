@@ -97,31 +97,31 @@ $ radoneye list
 
 $ radoneye beep --help
 $ radoneye beep 70C12E8A-27F6-3AEC-0BAD-95FA94BF17A9
-Beeping on 70C12E8A-27F6-3AEC-0BAD-95FA94BF17A9
+beep
 
 $ radoneye status --help
 $ radoneye status 70C12E8A-27F6-3AEC-0BAD-95FA94BF17A9
-alarm_enabled = 1
-alarm_interval_minutes = 60
-alarm_level_bq_m3 = 74
-alarm_level_pci_l = 2.0
-counts_current = 0
-counts_previous = 1
-counts_str = 0/1
-day_avg_bq_m3 = 14
-day_avg_pci_l = 0.38
-display_unit = pci/l
-latest_bq_m3 = 3
-latest_pci_l = 0.08
-model = RD200N
-month_avg_bq_m3 = 20
-month_avg_pci_l = 0.54
-peak_bq_m3 = 79
-peak_pci_l = 2.14
-serial = RU22204180050
-uptime_minutes = 223692
-uptime_str = 155d08h12m
-firmware_version = V2.0.2
+alarm_enabled	yes
+alarm_interval_minutes	60
+alarm_level_bq_m3	74
+alarm_level_pci_l	2.0
+counts_current	0
+counts_previous	1
+counts_str	0/1
+day_avg_bq_m3	7
+day_avg_pci_l	0.19
+display_unit	pci/l
+firmware_version	V2.0.2
+latest_bq_m3	7
+latest_pci_l	0.19
+model	RD200N
+month_avg_bq_m3	0
+month_avg_pci_l	0.0
+peak_bq_m3	35
+peak_pci_l	0.95
+serial	RU22201030383
+uptime_minutes	20734
+uptime_str	14d09h34m
 
 $ radoneye history --help
 $ radoneye history 70C12E8A-27F6-3AEC-0BAD-95FA94BF17A9
@@ -138,13 +138,25 @@ $ radoneye history 70C12E8A-27F6-3AEC-0BAD-95FA94BF17A9
 10	10	0.27
 ...
 
-$ radoneye status unit --help
+$ radoneye unit --help
 $ radoneye unit 70C12E8A-27F6-3AEC-0BAD-95FA94BF17A9
-Current display unit is pci/l
+pci/l
 $ radoneye unit 70C12E8A-27F6-3AEC-0BAD-95FA94BF17A9 --unit bq/m3
-Updating display unit to bq/m3
+bq/m3
 $ radoneye unit 70C12E8A-27F6-3AEC-0BAD-95FA94BF17A9
-Current display unit is bq/m3
+bq/m3
+
+$ radoneye alarm --help
+$ radoneye alarm 70C12E8A-27F6-3AEC-0BAD-95FA94BF17A9
+alarm_enabled	yes
+alarm_interval_minutes	60
+alarm_level_bq_m3	74
+alarm_level_pci_l	2.0
+$ radoneye alarm --status on --level 2.0 --unit pci/l --interval 60
+alarm_enabled	yes
+alarm_interval_minutes	60
+alarm_level_bq_m3	74
+alarm_level_pci_l	2.0
 ```
 
 NOTE: On macOS bluetooth addresses are obfuscated to UUIDs.
