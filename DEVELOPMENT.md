@@ -80,6 +80,8 @@ RADONEYE_ROUNDING_OFF=true radoneye ...
 .venv/bin/radoneye --help
 # clean
 rm -rf dist
+# test
+tox
 # build
 .venv/bin/python3 -m build
 # view what is included into wheel
