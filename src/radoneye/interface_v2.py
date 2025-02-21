@@ -49,12 +49,18 @@ class RadonEyeHistoryPage(TypedDict):
 
 
 def parse_status(data: bytearray) -> RadonEyeStatus:
-    serial_part1 = read_str(data, 8, 3)  # series?
-    serial_part2 = read_str(data, 2, 6)  # manufacturing date (YYMMDD)?
-    serial_part3 = read_str(data, 11, 4)  # serial within manufacturing date?
-    serial = serial_part1 + serial_part2 + serial_part3
-
-    model = read_str(data, 16, 6)
+    if read_byte(data, 15) == 0x06:  # v2
+        serial_part1 = read_str(data, 8, 3)  # series?
+        serial_part2 = read_str(data, 2, 6)  # manufacturing date (YYMMDD)?
+        serial_part3 = read_str(data, 11, 4)  # serial within manufacturing date?
+        serial = serial_part1 + serial_part2 + serial_part3
+        model = read_str(data, 16, 6)
+    elif read_byte(data, 14) == 0x07:  # v3
+        serial = read_str(data, 2, 12)
+        model = read_str(data, 15, 7)
+    else:
+        serial = "unknown"
+        model = "unknown"
 
     firmware_version = read_str(data, 22, 6)
 

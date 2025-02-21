@@ -5,8 +5,8 @@
 Install dependencies and create venv:
 
 ```sh
-brew install python@3.9
-python3.9 -m venv .venv
+brew install python
+python3 -m venv .venv
 .venv/bin/pip3 install -r requirements.txt -r requirements.dev.txt
 .venv/bin/pip3 install -e .
 ```
@@ -47,7 +47,7 @@ open coverage/index.html
 Run integration tests:
 
 ```sh
-brew install tox python@3.9 python@3.10 python@3.11 python@3.12
+brew install tox python@3.9 python@3.10 python@3.11 python@3.12 python@3.13
 tox
 ```
 

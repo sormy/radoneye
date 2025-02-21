@@ -1,4 +1,5 @@
 import asyncio
+import re
 from typing import Any
 from unittest.mock import MagicMock, call
 
@@ -20,7 +21,20 @@ from radoneye.interface_v2 import (
 )
 
 # triggered by command 0x40
-msg_40 = "4042323230313033525532303338330652443230304e56322e302e3200014a00060a00080000000300010079300000e01108001c00020000003822005c8f423fa4709d3f"
+msg_40_v2 = r"""
+0x00: 40 42 32 32 30 31 30 33 52 55 32 30 33 38 33 06 # @B220103RU20383.
+0x10: 52 44 32 30 30 4e 56 32 2e 30 2e 32 00 01 4a 00 # RD200NV2.0.2..J.
+0x20: 06 0a 00 08 00 00 00 03 00 01 00 79 30 00 00 e0 # ...........y0...
+0x30: 11 08 00 1c 00 02 00 00 00 38 22 00 5c 8f 42 3f # .........8".\.B?
+0x40: a4 70 9d 3f                                     # .p.?
+"""
+msg_40_v3 = r"""
+0x00: 40 42 49 4a 30 31 52 45 30 30 31 34 30 34 07 52 # @BIJ01RE001404.R
+0x10: 44 32 30 30 56 33 56 33 2e 30 2e 31 00 00 94 00 # D200V3V3.0.1....
+0x20: 06 00 00 09 00 00 00 00 00 00 00 cd 11 00 00 00 # ................
+0x30: 00 00 00 14 00 02 00 00 00 4b 00 f2 00 00 00 00 # .........K......
+0x40: d7 a3 70 3f                                     # ..p?
+"""
 
 # triggered by command 0x41
 # pages are in right order, from first to last
@@ -64,6 +78,10 @@ msg_41 = [
 ]
 
 
+def dump_to_bytearray(hex_dump: str) -> bytearray:
+    return bytearray.fromhex(re.sub(r"(?m)^.*?:|#.*$|\s+", "", hex_dump))
+
+
 @pytest.fixture
 def bleak_client():
     notify_callback: Any = None
@@ -80,7 +98,7 @@ def bleak_client():
         loop = asyncio.get_running_loop()
         if notify_callback is not None:
             if data[0] == COMMAND_STATUS:
-                loop.call_soon(lambda buf: notify_callback(char, buf), bytearray.fromhex(msg_40))
+                loop.call_soon(lambda buf: notify_callback(char, buf), dump_to_bytearray(msg_40_v2))
             elif data[0] == COMMAND_HISTORY:
                 for msg in msg_41:
                     loop.call_soon(lambda buf: notify_callback(char, buf), bytearray.fromhex(msg))
@@ -99,8 +117,8 @@ def radoneye_interface(bleak_client: BleakClient):
     return InterfaceV2(bleak_client, 1, 1, False)
 
 
-def test_parse_status():
-    result = parse_status(bytearray.fromhex(msg_40))
+def test_parse_status_v2():
+    result = parse_status(dump_to_bytearray(msg_40_v2))
     assert result == snapshot(
         {
             "serial": "RU22201030383",
@@ -123,6 +141,35 @@ def test_parse_status():
             "alarm_enabled": 1,
             "alarm_level_bq_m3": 74,
             "alarm_level_pci_l": 2.0,
+            "alarm_interval_minutes": 60,
+        }
+    )
+
+
+def test_parse_status_v3():
+    result = parse_status(dump_to_bytearray(msg_40_v3))
+    assert result == snapshot(
+        {
+            "serial": "IJ01RE001404",
+            "model": "RD200V3",
+            "firmware_version": "V3.0.1",
+            "latest_bq_m3": 0,
+            "latest_pci_l": 0.0,
+            "day_avg_bq_m3": 9,
+            "day_avg_pci_l": 0.24,
+            "month_avg_bq_m3": 0,
+            "month_avg_pci_l": 0.0,
+            "peak_bq_m3": 20,
+            "peak_pci_l": 0.54,
+            "counts_current": 0,
+            "counts_previous": 0,
+            "counts_str": "0/0",
+            "uptime_minutes": 4557,
+            "uptime_str": "3d03h57m",
+            "display_unit": "pci/l",
+            "alarm_enabled": False,
+            "alarm_level_bq_m3": 148,
+            "alarm_level_pci_l": 4.0,
             "alarm_interval_minutes": 60,
         }
     )
@@ -162,7 +209,7 @@ async def test_retrieve_status(bleak_client: Any, radoneye_interface: InterfaceV
         call(CHAR_COMMAND, bytearray([COMMAND_STATUS])),
     ]
 
-    assert result == parse_status(bytearray.fromhex(msg_40))
+    assert result == parse_status(dump_to_bytearray(msg_40_v2))
 
 
 @pytest.mark.asyncio

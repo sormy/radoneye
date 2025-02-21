@@ -7,11 +7,13 @@ all status properties are decoded, no history support, no beep and alarm support
 
 Device support list:
 
-| Name   | Version | Supported | Tested by                  |
-| ------ | ------- | --------- | -------------------------- |
-| RD200  | 1       | YES       | Tested by henry@fiatlux.us |
-| RD200N | 2       | YES       | Tested by author           |
-| RD200P | 2       | YES?      | Pending testing            |
+| Name    | API | Supported | Tested by                  |
+| ------- | --- | --------- | -------------------------- |
+| RD200   | v1  | YES       | Tested by henry@fiatlux.us |
+| RD200P  | ?   | ?         |                            |
+| RD200N  | v2  | YES       | Tested by author           |
+| RD200P2 | ?   | ?         |                            |
+| RD200V3 | v2  | YES       | Tested by @PhLacoude       |
 
 Capability support list:
 
@@ -26,6 +28,7 @@ Capability support list:
 | Read raw particle counts   | YES       | YES       |
 | Read uptime                | YES       | YES       |
 | Read history               | YES       | YES       |
+| Read shock status          | NO        | NO        |
 | Trigger beep               | YES       | YES       |
 | Read alarm settings        | YES       | YES       |
 | Write alarm settings       | YES       | YES       |

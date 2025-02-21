@@ -24,25 +24,40 @@ Format:
 
 ## Full status response (0x40) (INCOMING)
 
-Example:
+Example (v2):
 
 ```
-0x00: 40 42 32 32 30 31 30 33 52 55 32 30 33 38 33 06
-0x10: 52 44 32 30 30 4e 56 32 2e 30 2e 32 00 01 4a 00
-0x20: 06 0a 00 08 00 00 00 03 00 01 00 79 30 00 00 e0
-0x30: 11 08 00 1c 00 02 00 00 00 38 22 00 5c 8f 42 3f
-0x40: a4 70 9d 3f
+0x00: 40 42 32 32 30 31 30 33 52 55 32 30 33 38 33 06 # @B220103RU20383.
+0x10: 52 44 32 30 30 4e 56 32 2e 30 2e 32 00 01 4a 00 # RD200NV2.0.2..J.
+0x20: 06 0a 00 08 00 00 00 03 00 01 00 79 30 00 00 e0 # ...........y0...
+0x30: 11 08 00 1c 00 02 00 00 00 38 22 00 5c 8f 42 3f # .........8".\.B?
+0x40: a4 70 9d 3f                                     # .p.?
+```
+
+Example (v3):
+
+```
+0x00: 40 42 49 4a 30 31 52 45 30 30 31 34 30 34 07 52 # @BIJ01RE001404.R
+0x10: 44 32 30 30 56 33 56 33 2e 30 2e 31 00 00 94 00 # D200V3V3.0.1....
+0x20: 06 00 00 09 00 00 00 00 00 00 00 cd 11 00 00 00 # ................
+0x30: 00 00 00 14 00 02 00 00 00 4b 00 f2 00 00 00 00 # .........K......
+0x40: d7 a3 70 3f                                     # ..p?
 ```
 
 Format:
 
 -   0x00: code 0x40
 -   0x01: buffer length: 0x42
--   0x02: serial: manufacturing date: 6 bytes, ascii, YYMMDD
--   0x08: serial: series: 3 bytes, ascii
--   0x0B: serial: serial within day: 4 bytes, ascii
--   0x0F: reserved 0x06?
--   0x10: model: 6 bytes, ascii
+-   ver2:
+    -   0x02: serial: manufacturing date: 6 bytes, ascii, YYMMDD
+    -   0x08: serial: series: 3 bytes, ascii
+    -   0x0B: serial: serial within day: 4 bytes, ascii
+    -   0x0F: reserved 0x06 (model name length)
+    -   0x10: model: 6 bytes, ascii
+-   ver3:
+    -   0x02: serial: 12 bytes, ascii
+    -   0x0E: reserved 0x07 (model name length)
+    -   0x0F: model: 7 bytes, ascii
 -   0x16: software version: 6 bytes, ascii
 -   0x1C: display unit: uint8 (0x00 - pci/l, 0x01 - bq/m3)
 -   0x1D: alarm status: uint8 (0x00 - disabled, 0x01 - enabled)
@@ -59,8 +74,6 @@ Format:
 -   0x35: unknown, 4 bytes
 -   0x39: number of data points in history, uint16
 -   0x3B: unknown, 9 bytes
-
-15-4-2
 
 ## History request (0x41) (OUTGOING)
 
