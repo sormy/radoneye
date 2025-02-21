@@ -73,6 +73,15 @@ RADONEYE_ROUNDING_OFF=true radoneye ...
 
 ## Publishing
 
+Before publishing:
+
+1. Update version in pyproject.toml
+2. Update CHANGELOG.md
+3. Commit and push changes
+4. Create tag and push tag
+
+Then follow publish process to pypi:
+
 ```sh
 # install locally
 .venv/bin/pip3 install -e .

@@ -1,3 +1,9 @@
+v2.0.2
+
+-   Added support for RD200V3 (minor fixes to parsing of serial and model)
+-   Refined dependencies to be less restrictive
+-   Added Python 3.13 support in tox
+
 v2.0.1
 
 -   No functional changes, just documentation fixes.
