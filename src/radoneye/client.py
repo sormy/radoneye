@@ -20,7 +20,7 @@ class RadonEyeClient:
         adapter: str | None = None,
         debug: bool = False,
     ) -> None:
-        self.client = BleakClient(address_or_ble_device, timout=connect_timeout, adapter=adapter)
+        self.client = BleakClient(address_or_ble_device, timeout=connect_timeout, adapter=adapter)
         self.interface: RadonEyeInterface | None = None
         self.status_read_timeout = status_read_timeout
         self.history_read_timeout = history_read_timeout
