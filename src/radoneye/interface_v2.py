@@ -169,6 +169,9 @@ class InterfaceV2(RadonEyeInterface):
         future = loop.create_future()
 
         def callback(char: BleakGATTCharacteristic, data: bytearray) -> None:
+            # Early exit if already complete
+            if future.done():
+                return
             if data[0] == COMMAND_STATUS:
                 future.set_result(parse_status(dump_in(data, self.debug)))
 
@@ -186,6 +189,9 @@ class InterfaceV2(RadonEyeInterface):
         pages: list[RadonEyeHistoryPage] = []
 
         def callback(char: BleakGATTCharacteristic, data: bytearray) -> None:
+            # Early exit if already complete
+            if future.done():
+                return
             if data[0] == COMMAND_HISTORY:
                 page = parse_history_page(dump_in(data, self.debug))
                 pages.append(page)

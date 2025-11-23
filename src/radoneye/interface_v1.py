@@ -185,6 +185,10 @@ class InterfaceV1(RadonEyeInterface):
             nonlocal msg_ac
             nonlocal msg_af
 
+            # Early exit if already complete
+            if future.done():
+                return
+
             if data[0] == MSG_PREAMBLE_50:
                 msg_50 = dump_in(data, self.debug)
             elif data[0] == MSG_PREAMBLE_51:
@@ -237,11 +241,17 @@ class InterfaceV1(RadonEyeInterface):
 
         def callback_status(char: BleakGATTCharacteristic, data: bytearray) -> None:
             nonlocal result_size
+            # Early exit if already complete
+            if size_future.done():
+                return
             if data[0] == MSG_PREAMBLE_E8:
                 size_future.set_result(parse_history_size(dump_in(data, self.debug)))
 
         def callback_history(char: BleakGATTCharacteristic, data: bytearray) -> None:
             nonlocal result_data
+            # Early exit if already complete
+            if result_future.done():
+                return
             result_data.extend(dump_in(data, self.debug))
             if len(result_data) >= result_size * 2:
                 result_future.set_result(parse_history_data(result_data, result_size))
