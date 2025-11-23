@@ -32,13 +32,21 @@ class RadonEyeClient:
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):  # type: ignore
-        await self.client.disconnect()
+        try:
+            await self.client.disconnect()
+        except (EOFError, Exception):
+            # Ignore errors during disconnect - connection may already be closed
+            pass
 
     async def connect(self) -> None:
         await self.client.connect()  # type: ignore
 
     async def disconnect(self) -> None:
-        await self.client.disconnect()  # type: ignore
+        try:
+            await self.client.disconnect()  # type: ignore
+        except (EOFError, Exception):
+            # Ignore errors during disconnect - connection may already be closed
+            pass
 
     @property
     def is_connected(self) -> bool:
