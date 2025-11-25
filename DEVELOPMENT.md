@@ -47,7 +47,7 @@ open coverage/index.html
 Run integration tests:
 
 ```sh
-brew install tox python@3.9 python@3.10 python@3.11 python@3.12 python@3.13
+brew install tox python@3.10 python@3.11 python@3.12 python@3.13 python@3.14
 tox
 ```
 
