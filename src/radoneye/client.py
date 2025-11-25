@@ -14,7 +14,7 @@ class RadonEyeClient:
     def __init__(
         self,
         address_or_ble_device: Union[BLEDevice, str],
-        connect_timeout: float = 10,
+        connect_timeout: float = 30,
         status_read_timeout: float = 5,
         history_read_timeout: float = 60,
         adapter: str | None = None,

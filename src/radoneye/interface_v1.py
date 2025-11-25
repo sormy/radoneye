@@ -240,7 +240,6 @@ class InterfaceV1(RadonEyeInterface):
         result_data = bytearray()
 
         def callback_status(char: BleakGATTCharacteristic, data: bytearray) -> None:
-            nonlocal result_size
             # Early exit if already complete
             if size_future.done():
                 return
@@ -248,7 +247,6 @@ class InterfaceV1(RadonEyeInterface):
                 size_future.set_result(parse_history_size(dump_in(data, self.debug)))
 
         def callback_history(char: BleakGATTCharacteristic, data: bytearray) -> None:
-            nonlocal result_data
             # Early exit if already complete
             if result_future.done():
                 return

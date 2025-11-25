@@ -10,7 +10,7 @@ class RadonEyeScanner:
     @classmethod
     async def discover(
         cls,
-        timeout: float = 5,
+        timeout: float = 30,
         adapter: str | None = None,
     ) -> list[BLEDevice]:
         devices = await BleakScanner.discover(timeout=timeout, adapter=adapter)  # type: ignore

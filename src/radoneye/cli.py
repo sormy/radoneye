@@ -236,7 +236,7 @@ async def main(argv: list[str]):
         help="scan for devices available nearby",
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
-    parser_list.add_argument("--timeout", type=int, help="scan timeout", default=5)
+    parser_list.add_argument("--timeout", type=int, help="scan timeout", default=30)
     parser_list.add_argument(
         "--output", choices=["json", "text"], help="output format", default="text"
     )
@@ -247,7 +247,7 @@ async def main(argv: list[str]):
         help="trigger beep",
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
-    parser_beep.add_argument("--connect-timeout", type=int, help="connect timeout", default=10)
+    parser_beep.add_argument("--connect-timeout", type=int, help="connect timeout", default=30)
     parser_beep.add_argument("address", help="device address")
     parser_beep.set_defaults(func=cmd_beep)
 
@@ -256,7 +256,7 @@ async def main(argv: list[str]):
         help="read status",
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
-    parser_status.add_argument("--connect-timeout", type=int, help="connect timeout", default=10)
+    parser_status.add_argument("--connect-timeout", type=int, help="connect timeout", default=30)
     parser_status.add_argument("--read-timeout", type=int, help="read timeout", default=5)
     parser_status.add_argument(
         "--output", choices=["json", "text"], help="output format", default="text"
@@ -269,7 +269,7 @@ async def main(argv: list[str]):
         help="read history",
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
-    parser_history.add_argument("--connect-timeout", type=int, help="connect timeout", default=10)
+    parser_history.add_argument("--connect-timeout", type=int, help="connect timeout", default=30)
     parser_history.add_argument("--read-timeout", type=int, help="read timeout", default=60)
     parser_history.add_argument(
         "--output", choices=["json", "text"], help="output format", default="text"
@@ -283,7 +283,7 @@ async def main(argv: list[str]):
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
     parser_alarm.add_argument("address", help="device address")
-    parser_alarm.add_argument("--connect-timeout", type=int, help="connect timeout", default=10)
+    parser_alarm.add_argument("--connect-timeout", type=int, help="connect timeout", default=30)
     parser_alarm.add_argument("--read-timeout", type=int, help="read timeout", default=5)
     parser_alarm.add_argument("--status", choices=["on", "off"], help="alarm status")
     parser_alarm.add_argument("--level", type=float, help="alarm level in bq/m3 or pci/l")
@@ -300,7 +300,7 @@ async def main(argv: list[str]):
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
     parser_unit.add_argument("address", help="device address")
-    parser_unit.add_argument("--connect-timeout", type=int, help="connect timeout", default=10)
+    parser_unit.add_argument("--connect-timeout", type=int, help="connect timeout", default=30)
     parser_unit.add_argument("--read-timeout", type=int, help="read timeout", default=5)
     parser_unit.add_argument("--unit", choices=["bq/m3", "pci/l"], help="set new display unit")
     parser_unit.add_argument(

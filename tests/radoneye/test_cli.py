@@ -25,7 +25,7 @@ async def test_unit_get(
     await main(["radoneye", "unit", "address", "--output", output])
 
     RadonEyeClient.assert_called_once_with(
-        "address", adapter=None, connect_timeout=10, status_read_timeout=5, debug=False
+        "address", adapter=None, connect_timeout=30, status_read_timeout=5, debug=False
     )
     radoneye_client.status.assert_called_once_with()
     radoneye_client.set_unit.assert_not_called()
@@ -47,7 +47,7 @@ async def test_unit_set(
     await main(["radoneye", "unit", "address", "--unit", "pci/l", "--output", output])
 
     RadonEyeClient.assert_called_once_with(
-        "address", adapter=None, connect_timeout=10, status_read_timeout=5, debug=False
+        "address", adapter=None, connect_timeout=30, status_read_timeout=5, debug=False
     )
     radoneye_client.status.assert_not_called()
     radoneye_client.set_unit.assert_called_once_with("pci/l")
@@ -77,7 +77,7 @@ async def test_alarm_get(
     await main(["radoneye", "alarm", "address", "--output", output])
 
     RadonEyeClient.assert_called_once_with(
-        "address", adapter=None, connect_timeout=10, status_read_timeout=5, debug=False
+        "address", adapter=None, connect_timeout=30, status_read_timeout=5, debug=False
     )
     radoneye_client.status.assert_called_once_with()
     radoneye_client.set_alarm.assert_not_called()
@@ -123,7 +123,7 @@ async def test_alarm_set_all(
     )
 
     RadonEyeClient.assert_called_once_with(
-        "address", adapter=None, connect_timeout=10, status_read_timeout=5, debug=False
+        "address", adapter=None, connect_timeout=30, status_read_timeout=5, debug=False
     )
     radoneye_client.status.assert_not_called()
     radoneye_client.set_alarm.assert_called_once_with(
@@ -179,7 +179,7 @@ async def test_alarm_set_status(
     )
 
     RadonEyeClient.assert_called_once_with(
-        "address", adapter=None, connect_timeout=10, status_read_timeout=5, debug=False
+        "address", adapter=None, connect_timeout=30, status_read_timeout=5, debug=False
     )
     radoneye_client.status.assert_called_once_with()
     radoneye_client.set_alarm.assert_called_once_with(
@@ -234,7 +234,7 @@ async def test_alarm_set_level_no_unit(
     )
 
     RadonEyeClient.assert_called_once_with(
-        "address", adapter=None, connect_timeout=10, status_read_timeout=5, debug=False
+        "address", adapter=None, connect_timeout=30, status_read_timeout=5, debug=False
     )
     radoneye_client.status.assert_called_once_with()
     radoneye_client.set_alarm.assert_called_once_with(
@@ -291,7 +291,7 @@ async def test_alarm_set_level_with_unit(
     )
 
     RadonEyeClient.assert_called_once_with(
-        "address", adapter=None, connect_timeout=10, status_read_timeout=5, debug=False
+        "address", adapter=None, connect_timeout=30, status_read_timeout=5, debug=False
     )
     radoneye_client.status.assert_called_once_with()
     radoneye_client.set_alarm.assert_called_once_with(
@@ -346,7 +346,7 @@ async def test_alarm_set_interval(
     )
 
     RadonEyeClient.assert_called_once_with(
-        "address", adapter=None, connect_timeout=10, status_read_timeout=5, debug=False
+        "address", adapter=None, connect_timeout=30, status_read_timeout=5, debug=False
     )
     radoneye_client.status.assert_called_once_with()
     radoneye_client.set_alarm.assert_called_once_with(
@@ -407,7 +407,7 @@ async def test_get_status(
     await main(["radoneye", "status", "address", "--output", output])
 
     RadonEyeClient.assert_called_once_with(
-        "address", adapter=None, connect_timeout=10, status_read_timeout=5, debug=False
+        "address", adapter=None, connect_timeout=30, status_read_timeout=5, debug=False
     )
     radoneye_client.status.assert_called_once_with()
 
@@ -422,7 +422,7 @@ async def test_trigger_beep(RadonEyeClient: AsyncMock, capsys: pytest.CaptureFix
 
     await main(["radoneye", "beep", "address"])
 
-    RadonEyeClient.assert_called_once_with("address", adapter=None, connect_timeout=10, debug=False)
+    RadonEyeClient.assert_called_once_with("address", adapter=None, connect_timeout=30, debug=False)
     radoneye_client.beep.assert_called_once_with()
 
     assert capsys.readouterr().out.rstrip() == "beep"
@@ -449,7 +449,7 @@ async def test_get_history(
     await main(["radoneye", "history", "address", "--output", output])
 
     RadonEyeClient.assert_called_once_with(
-        "address", adapter=None, connect_timeout=10, history_read_timeout=60, debug=False
+        "address", adapter=None, connect_timeout=30, history_read_timeout=60, debug=False
     )
     radoneye_client.history.assert_called_once_with()
 
@@ -482,7 +482,7 @@ async def test_list(
 
     await main(["radoneye", "list", "--output", output])
 
-    discover_mock.assert_called_once_with(adapter=None, timeout=5)
+    discover_mock.assert_called_once_with(adapter=None, timeout=30)
 
     out_content = capsys.readouterr().out.rstrip()
     if output == "text":
