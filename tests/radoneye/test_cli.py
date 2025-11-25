@@ -475,8 +475,8 @@ async def test_list(
     capsys: pytest.CaptureFixture[str],
     output: OutputType,
 ):
-    dev1 = BLEDevice("70C12E8A-27F6-3AEC-0BAD-95FA94BF17A9", "FR:RU22201030383", None, 0)
-    dev2 = BLEDevice("3775964E-C653-C00C-7F02-7C03F9F0122D", "FR:RU22204180050", None, 0)
+    dev1 = BLEDevice("70C12E8A-27F6-3AEC-0BAD-95FA94BF17A9", "FR:RU22201030383", None)
+    dev2 = BLEDevice("3775964E-C653-C00C-7F02-7C03F9F0122D", "FR:RU22204180050", None)
 
     discover_mock.return_value = [dev1, dev2]
 
